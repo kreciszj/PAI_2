@@ -6,7 +6,7 @@
    ```bash
    git clone <repo-url>
    cd <repo-folder>
-````
+    ```
 
 2. Install dependencies:
 
