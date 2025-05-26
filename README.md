@@ -4,8 +4,8 @@
 
 1. Clone the repo:
    ```bash
-   git clone <repo-url>
-   cd <repo-folder>
+   git clone https://github.com/kreciszj/PAI_2.git
+   cd PAI_2
     ```
 
 2. Install dependencies:
