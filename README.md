@@ -8,10 +8,10 @@
    cd PAI_2
     ```
 
-2. Install dependencies:
+2. Install dependencies for both parts:
 
    ```bash
-   npm install
+   npm run install-all
    ```
 
 3. Start both frontend and backend:
@@ -22,3 +22,5 @@
 
 The React app will be on [http://localhost:5173](http://localhost:5173)
 The API server will be on [http://localhost:3001](http://localhost:3001)
+
+The backend reads configuration like database credentials and the port from environment variables. Copy `.env.example` to `.env` and adjust values if needed.
