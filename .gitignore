@@ -1,57 +1,7 @@
 node_modules/
-.pnpm/
-.yarn/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-#   System pliki & IDE
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-*.swp
-*.swo
-
-#   Konfiguracje środowiskowe
 .env
-.env.*.local
-*.local.env
-
-#   Bazy danych (sqlite itp.)
-db/*.sqlite
-db/*.sqlite-journal
-*.db
-*.db-journal
-
-#   Logi & dump-y
-logs/
-*.log
-*.out
-*.pid
-*.pid.lock
-
-#   Build / artefakty
-dist/
-build/
-out/
-.next/
-.vite/
-.svelte-kit/
-tmp/
-temp/
-coverage/
-.nyc_output/
-.eslintcache
-.turbo/
-
-#   Frontend statyczne
-*.cache
-*.tgz
-*.zip
-*.tar.gz
-
-#   Swagger / OpenAPI (wygenerowane)
-swagger-ui/
-api-docs/
+server/.env
+client/.env
+server/data/*.sqlite
+server/data/*.sqlite-journal
+dist
