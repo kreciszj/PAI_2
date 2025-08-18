@@ -32,12 +32,26 @@
 
    # db
    DB_PATH=./data/app.sqlite
+
+   # seeding
+   SEED_ON_BOOT=true
+   SEED_SAMPLE_DATA=true
+   SEED_ADMIN_USER=user
+   SEED_ADMIN_PASS=user
+
    ```
 
    **client/.env**
    ```ini
    VITE_API_URL=http://localhost:3000
    ```
+
+   **Dev**: keep SEED_ON_BOOT=true and SEED_SAMPLE_DATA=true.
+   Start with:
+   `cd server && npm run dev`
+   this will create the admin user and sample movies if they don’t already exist.
+
+   **Prod**: set SEED_ON_BOOT=false. Run npm run db:seed once during deployment, or temporarily enable it in .env and then disable it again after seeding.
 
 4. **Start both frontend and backend**
 

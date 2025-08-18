@@ -6,7 +6,8 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "db:seed": "node -e \"import('./src/bootstrap/seed.js').then(m=>m.seed())\""
   },
   "keywords": [],
   "author": "Jakub Kręcisz, Maciej Wójcik, Bartłomiej Liber",

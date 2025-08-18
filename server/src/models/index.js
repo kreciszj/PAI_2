@@ -22,6 +22,13 @@ export const RefreshToken = sequelize.define('RefreshToken', {
   revoked_at: { type: DataTypes.DATE, allowNull: true },
 }, { tableName: 'refresh_tokens', underscored: true });
 
+export const Movie = sequelize.define('Movie', {
+  id: { type: DataTypes.UUID, primaryKey: true },
+  title: { type: DataTypes.STRING, allowNull: false },
+  year: { type: DataTypes.INTEGER },
+  description: { type: DataTypes.TEXT },
+}, { tableName: 'movies', underscored: true });
+
 User.hasMany(RefreshToken, { foreignKey: 'user_id' });
 RefreshToken.belongsTo(User, { foreignKey: 'user_id' });
 

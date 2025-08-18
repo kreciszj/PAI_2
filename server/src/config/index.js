@@ -1,5 +1,8 @@
 import 'dotenv/config';
 
+const env = process.env.NODE_ENV || 'development';
+const isProd = env === 'production';
+
 export const config = {
   port: process.env.PORT || 3000,
   corsOrigin: process.env.CORS_ORIGIN || '*',
@@ -10,5 +13,11 @@ export const config = {
     accessSecret: process.env.JWT_SECRET,
     refreshSecret: process.env.JWT_REFRESH_SECRET,
   },
-  env: process.env.NODE_ENV || 'development',
+  env,
+  seed: {
+    onBoot: (process.env.SEED_ON_BOOT || (!isProd)).toString() === 'true',
+    sampleData: (process.env.SEED_SAMPLE_DATA || (!isProd)).toString() === 'true',
+    adminUser: process.env.SEED_ADMIN_USER || 'user',
+    adminPass: process.env.SEED_ADMIN_PASS || 'user',
+  },
 };
