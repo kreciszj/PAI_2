@@ -22,13 +22,20 @@ export default function Login() {
     }
 
     return (
-        <form onSubmit={submit} style={{ maxWidth: 360, margin: '64px auto', display: 'grid', gap: 12 }}>
-            <h1>Logowanie</h1>
-            <input placeholder="username" value={username} onChange={e => setU(e.target.value)} />
-            <input placeholder="password" type="password" value={password} onChange={e => setP(e.target.value)} />
-            {error && <div style={{ color: 'red' }}>{error}</div>}
-            <button type="submit">Zaloguj</button>
-            <a href="/register" style={{ textAlign: 'center' }}>Nie masz konta? Zarejestruj się</a>
-        </form>
+        <div className="container-page max-w-md">
+            <div className="card">
+                <h1 className="text-xl font-semibold mb-4">Logowanie</h1>
+                <form onSubmit={submit} className="grid gap-3">
+                    <input className="input" placeholder="username" value={username} onChange={e => setU(e.target.value)} />
+                    <input className="input" placeholder="password" type="password" value={password} onChange={e => setP(e.target.value)} />
+                    {error && <div className="text-sm text-red-500">{error}</div>}
+                    <button type="submit" className="btn">Zaloguj</button>
+                </form>
+                <div className="mt-3 text-center">
+                    <a href="/register" className="btn-ghost">Nie masz konta? Zarejestruj się</a>
+                </div>
+            </div>
+        </div>
     );
+
 }

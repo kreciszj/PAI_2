@@ -14,23 +14,33 @@ export default function Layout() {
     })();
   }, [accessToken, refreshToken, setTokens]);
 
+  const link = (to, label, end=false) => (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) => isActive ? 'navlink navlink-active' : 'navlink'}
+    >
+      {label}
+    </NavLink>
+  );
+
   return (
-    <div>
-      <header style={{
-        display:'flex', alignItems:'center', justifyContent:'space-between',
-        padding:'12px 16px', borderBottom:'1px solid rgba(0,0,0,0.2)'
-      }}>
-        <nav style={{ display:'flex', gap:12 }}>
-          <NavLink to="/" end> Baza filmów </NavLink>
-          <NavLink to="/blogs"> Blogi </NavLink>
-          <NavLink to="/my-blog"> Mój Blog </NavLink>
-        </nav>
-        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          {me && <Link to="/settings">@{me.username}</Link>}
-          <button onClick={clear}>Wyloguj</button>
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100">
+      <header className="sticky top-0 z-10 border-b border-neutral-200/70 dark:border-neutral-800
+                         bg-white/70 dark:bg-neutral-900/70 backdrop-blur">
+        <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between">
+          <nav className="flex items-center gap-1">
+            {link('/', 'Baza filmów', true)}
+            {link('/blogs', 'Blogi')}
+            {link('/my-blog', 'Mój Blog')}
+          </nav>
+          <div className="flex items-center gap-3">
+            {me && <Link to="/settings" className="btn-ghost">@{me.username}</Link>}
+            <button className="btn-ghost" onClick={clear}>Wyloguj</button>
+          </div>
         </div>
       </header>
-      <main style={{ padding:16 }}>
+      <main className="container-page">
         <Outlet />
       </main>
     </div>
