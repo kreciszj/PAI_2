@@ -11,14 +11,29 @@ const router = Router();
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   const { username, password } = req.body || {};
-  if (!username || !password) return res.status(400).json({ error: 'username_and_password_required' });
-  const exists = await User.findOne({ where: { username } });
+
+  // validate input
+  if (typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ error: 'invalid_payload' });
+  }
+  const u = username.trim();
+  if (u.length < 3 || u.length > 32) {
+    return res.status(400).json({ error: 'username_length_3_32' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'password_min_6' });
+  }
+
+  const exists = await User.findOne({ where: { username: u } });
   if (exists) return res.status(409).json({ error: 'username_taken' });
 
   const hash = await bcrypt.hash(password, 12);
-  const user = await User.create({ id: uuid(), username, password_hash: hash, role: 'user' });
+  const user = await User.create({ id: uuid(), username: u, password_hash: hash, role: 'user' });
+
+  // zwracamy minimalne dane, bez tokenów
   return res.status(201).json({ id: user.id, username: user.username });
 });
+
 
 // POST /api/auth/login -> access + refresh
 router.post('/login', async (req, res) => {
