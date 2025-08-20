@@ -35,7 +35,6 @@ router.get('/:id', async (req, res) => {
     const commentsRows = await Comment.findAll({
       where: { movie_id: id },
       include: [{ model: User, attributes: ['id', 'username'] }],
-      // UWAGA: przy underscored: true sortujemy po 'created_at'
       order: [['created_at', 'DESC']],
     });
 
