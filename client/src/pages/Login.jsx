@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 const API = import.meta.env.VITE_API_URL;
 
 export default function Login() {
@@ -32,7 +33,7 @@ export default function Login() {
                     <button type="submit" className="btn">Zaloguj</button>
                 </form>
                 <div className="mt-3 text-center">
-                    <a href="/register" className="btn-ghost">Nie masz konta? Zarejestruj się</a>
+                    <Link to="/register" className="btn-ghost">Nie masz konta? Zarejestruj się</Link>
                 </div>
             </div>
         </div>

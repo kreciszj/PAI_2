@@ -7,6 +7,7 @@ export const sequelize = new Sequelize({
   logging: false,
 });
 
+// ===== MODELS =====
 export const User = sequelize.define('User', {
   id: { type: DataTypes.UUID, primaryKey: true },
   username: { type: DataTypes.STRING, unique: true, allowNull: false },
@@ -26,12 +27,43 @@ export const Movie = sequelize.define('Movie', {
   id: { type: DataTypes.UUID, primaryKey: true },
   title: { type: DataTypes.STRING, allowNull: false },
   year: { type: DataTypes.INTEGER },
+  director: { type: DataTypes.STRING },
   description: { type: DataTypes.TEXT },
 }, { tableName: 'movies', underscored: true });
 
+export const Rating = sequelize.define('Rating', {
+  id: { type: DataTypes.UUID, primaryKey: true },
+  user_id: { type: DataTypes.UUID, allowNull: false },
+  movie_id: { type: DataTypes.UUID, allowNull: false },
+  value: { type: DataTypes.INTEGER, allowNull: false, validate: { min: 1, max: 10 } },
+}, {
+  tableName: 'ratings',
+  underscored: true,
+  indexes: [{ unique: true, fields: ['user_id', 'movie_id'] }],
+});
+
+export const Comment = sequelize.define('Comment', {
+  id: { type: DataTypes.UUID, primaryKey: true },
+  user_id: { type: DataTypes.UUID, allowNull: false },
+  movie_id: { type: DataTypes.UUID, allowNull: false },
+  body: { type: DataTypes.TEXT, allowNull: false },
+}, { tableName: 'comments', underscored: true });
+
+// ===== RELATIONS =====
 User.hasMany(RefreshToken, { foreignKey: 'user_id' });
 RefreshToken.belongsTo(User, { foreignKey: 'user_id' });
 
+Movie.hasMany(Rating, { foreignKey: 'movie_id' });
+Rating.belongsTo(Movie, { foreignKey: 'movie_id' });
+User.hasMany(Rating, { foreignKey: 'user_id' });
+Rating.belongsTo(User, { foreignKey: 'user_id' });
+
+Movie.hasMany(Comment, { foreignKey: 'movie_id' });
+Comment.belongsTo(Movie, { foreignKey: 'movie_id' });
+User.hasMany(Comment, { foreignKey: 'user_id' });
+Comment.belongsTo(User, { foreignKey: 'user_id' });
+
+// ===== INIT =====
 export async function initDb() {
   await sequelize.sync();
 }
