@@ -6,6 +6,7 @@ import Blogs from './pages/Blogs';
 import MyBlog from './pages/MyBlog';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
+import MovieDetails from './pages/MovieDetails';
 
 function Private({ children }) {
   const { accessToken } = useAuth();
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="blogs" element={<Blogs />} />
             <Route path="my-blog" element={<MyBlog />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="movies/:id" element={<MovieDetails />} />
           </Route>
         </Routes>
       </BrowserRouter>

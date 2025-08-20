@@ -25,9 +25,9 @@ export async function seed() {
     const count = await Movie.count();
     if (count === 0) {
       await Movie.bulkCreate([
-        { id: uuid(), title: 'Inception', year: 2010, description: 'Sci-fi heist.' },
-        { id: uuid(), title: 'The Matrix', year: 1999, description: 'Reality bend.' },
-        { id: uuid(), title: 'Interstellar', year: 2014, description: 'Space & time.' },
+        { id: uuid(), title: 'Inception', year: 2010, director: 'Christopher Nolan', description: 'Sci-fi heist.' },
+        { id: uuid(), title: 'The Matrix', year: 1999, director: 'Lana & Lilly Wachowski', description: 'Reality bend.' },
+        { id: uuid(), title: 'Interstellar', year: 2014, director: 'Christopher Nolan', description: 'Space & time.' },
       ]);
       console.log('[seed] inserted sample movies');
     }
