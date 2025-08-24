@@ -49,6 +49,13 @@ export const Comment = sequelize.define('Comment', {
   body: { type: DataTypes.TEXT, allowNull: false },
 }, { tableName: 'comments', underscored: true });
 
+export const Post = sequelize.define('Post', {
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
+  title: { type: DataTypes.STRING, allowNull: false },
+  body: { type: DataTypes.TEXT, allowNull: false },
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+}, { tableName: 'posts', underscored: true });
+
 // ===== RELATIONS =====
 User.hasMany(RefreshToken, { foreignKey: 'user_id' });
 RefreshToken.belongsTo(User, { foreignKey: 'user_id' });
