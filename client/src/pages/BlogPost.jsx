@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
 import Comments from './Comments';
 import { useAuth } from '../contexts/AuthContext';
+import ReactMarkdown from 'react-markdown';
 
 export default function BlogPost() {
   const { id } = useParams();
@@ -36,7 +37,9 @@ export default function BlogPost() {
   return (
     <div style={{ maxWidth: 500, margin: '0 auto', padding: 24 }}>
       <h2 style={{ fontSize: 24, marginBottom: 12 }}>{post.title}</h2>
-      <div style={{ marginBottom: 16 }}>{post.body}</div>
+      <div style={{ marginBottom: 16 }}>
+        {post.body && <ReactMarkdown>{post.body}</ReactMarkdown>}
+      </div>
       <small style={{ color: '#888' }}>{new Date(post.created_at).toLocaleString()}</small>
   <Comments />
     </div>
