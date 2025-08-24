@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '../lib/api';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ReactMarkdown from 'react-markdown';
 
 export default function Blogs() {
   const { accessToken } = useAuth();
@@ -91,6 +92,9 @@ export default function Blogs() {
                 <div style={{ margin: '8px 0', color: '#333' }}>
                   {/* Author will be shown here if available */}
                   {post.author?.username ? `Autor: ${post.author.username}` : 'Autor: nieznany'}
+                </div>
+                <div style={{ margin: '8px 0', color: '#333' }}>
+                  {post.body && <ReactMarkdown>{post.body}</ReactMarkdown>}
                 </div>
                 <small style={{ color: '#888' }}>{new Date(post.created_at).toLocaleString()}</small>
               </Link>
