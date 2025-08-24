@@ -45,8 +45,10 @@ export const Rating = sequelize.define('Rating', {
 export const Comment = sequelize.define('Comment', {
   id: { type: DataTypes.UUID, primaryKey: true },
   user_id: { type: DataTypes.UUID, allowNull: false },
-  movie_id: { type: DataTypes.UUID, allowNull: false },
+  movie_id: { type: DataTypes.UUID, allowNull: true },
+  post_id: { type: DataTypes.UUID, allowNull: true },
   body: { type: DataTypes.TEXT, allowNull: false },
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
 }, { tableName: 'comments', underscored: true });
 
 export const Post = sequelize.define('Post', {
@@ -54,9 +56,12 @@ export const Post = sequelize.define('Post', {
   title: { type: DataTypes.STRING, allowNull: false },
   body: { type: DataTypes.TEXT, allowNull: false },
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  author_id: { type: DataTypes.UUID, allowNull: false },
 }, { tableName: 'posts', underscored: true });
 
 // ===== RELATIONS =====
+User.hasMany(Post, { foreignKey: 'author_id' });
+Post.belongsTo(User, { foreignKey: 'author_id' });
 User.hasMany(RefreshToken, { foreignKey: 'user_id' });
 RefreshToken.belongsTo(User, { foreignKey: 'user_id' });
 
@@ -67,6 +72,8 @@ Rating.belongsTo(User, { foreignKey: 'user_id' });
 
 Movie.hasMany(Comment, { foreignKey: 'movie_id' });
 Comment.belongsTo(Movie, { foreignKey: 'movie_id' });
+Post.hasMany(Comment, { foreignKey: 'post_id' });
+Comment.belongsTo(Post, { foreignKey: 'post_id' });
 User.hasMany(Comment, { foreignKey: 'user_id' });
 Comment.belongsTo(User, { foreignKey: 'user_id' });
 

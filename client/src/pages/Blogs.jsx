@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../lib/api';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Blogs() {
+  const { accessToken } = useAuth();
   const [posts, setPosts] = useState([]);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -33,7 +36,8 @@ export default function Blogs() {
     try {
       const res = await apiFetch('/api/posts', {
         method: 'POST',
-        body: { title, body }
+        body: { title, body },
+        accessToken
       });
       if (!res.ok) {
         const errData = await res.json();
@@ -82,9 +86,14 @@ export default function Blogs() {
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {posts.map(post => (
             <li key={post.id} style={{ marginBottom: 24, background: '#fff', padding: 16, borderRadius: 8, boxShadow: '0 1px 4px #eee' }}>
-              <strong style={{ fontSize: 18 }}>{post.title}</strong>
-              <div style={{ margin: '8px 0', color: '#333' }}>{post.body}</div>
-              <small style={{ color: '#888' }}>{new Date(post.created_at).toLocaleString()}</small>
+              <Link to={`/blogs/${post.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                <strong style={{ fontSize: 18 }}>{post.title}</strong>
+                <div style={{ margin: '8px 0', color: '#333' }}>
+                  {/* Author will be shown here if available */}
+                  {post.author?.username ? `Autor: ${post.author.username}` : 'Autor: nieznany'}
+                </div>
+                <small style={{ color: '#888' }}>{new Date(post.created_at).toLocaleString()}</small>
+              </Link>
             </li>
           ))}
         </ul>

@@ -7,7 +7,8 @@ import MyBlog from './pages/MyBlog';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
 import MovieDetails from './pages/MovieDetails';
-import Register from './pages/Register'; // <= DODAJ
+import Register from './pages/Register';
+import BlogPost from './pages/BlogPost';
 
 function Private({ children }) {
   const { accessToken } = useAuth();
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/" element={<Private><Layout /></Private>}>
             <Route index element={<Movies />} />
             <Route path="blogs" element={<Blogs />} />
+            <Route path="blogs/:id" element={<BlogPost />} />
             <Route path="my-blog" element={<MyBlog />} />
             <Route path="settings" element={<Settings />} />
             <Route path="movies/:id" element={<MovieDetails />} />
