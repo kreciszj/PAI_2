@@ -16,7 +16,7 @@ export default function Blogs() {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiFetch('/api/posts');
+      const res = await apiFetch('/api/posts', { accessToken });
       if (!res.ok) throw new Error('Failed to fetch posts');
       const data = await res.json();
       setPosts(data);
@@ -92,6 +92,9 @@ export default function Blogs() {
                 <div style={{ margin: '8px 0', color: '#333' }}>
                   {/* Author will be shown here if available */}
                   {post.author?.username ? `Autor: ${post.author.username}` : 'Autor: nieznany'}
+                </div>
+                <div style={{ margin: '8px 0', color: '#555' }}>
+                  Polubienia: {post.likes_count ?? 0}
                 </div>
                 <div style={{ margin: '8px 0', color: '#333' }}>
                   {post.body && <ReactMarkdown>{post.body}</ReactMarkdown>}
