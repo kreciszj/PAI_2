@@ -97,6 +97,5 @@ PostLike.belongsTo(Post, { foreignKey: 'post_id' });
 
 // ===== INIT =====
 export async function initDb() {
-  // Use alter to evolve schema (adds missing columns/tables) without dropping data
-  await sequelize.sync({ alter: true });
+  await sequelize.sync({});
 }

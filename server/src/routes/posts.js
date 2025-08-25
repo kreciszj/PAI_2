@@ -65,7 +65,7 @@ router.post('/', requireAuth, async (req, res) => {
 // Get single post by id
 router.get('/:id', async (req, res) => {
 	try {
-		const post = await Post.findByPk(req.params.id);
+		const post = await Post.findByPk(req.params.id, { include: [{ model: User, attributes: ['id', 'username'] }] });
 		if (!post) return res.status(404).json({ error: 'not_found' });
 
 		let userId = null;
@@ -87,11 +87,68 @@ router.get('/:id', async (req, res) => {
 		  body: post.body,
 		  created_at: post.created_at,
 		  author_id: post.author_id,
+		  author: post.User ? { id: post.User.id, username: post.User.username } : null,
 		  likes_count: post.likes_count ?? 0,
 		  likedByMe,
 		});
 	} catch (err) {
 		res.status(500).json({ error: 'server_error' });
+	}
+});
+
+// Update post (author, moderator, admin)
+router.put('/:id', requireAuth, async (req, res) => {
+	try {
+		const { id } = req.params;
+		const post = await Post.findByPk(id);
+		if (!post) return res.status(404).json({ error: 'not_found' });
+
+		const me = req.user; // { sub, role, username }
+		const canModify = me && (me.sub === post.author_id || me.role === 'admin' || me.role === 'moderator');
+		if (!canModify) return res.status(403).json({ error: 'forbidden' });
+
+		let { title, body } = req.body || {};
+		if (typeof title === 'string') title = title.trim();
+		if (typeof body === 'string') body = body.trim();
+		if (!title && !body) return res.status(400).json({ error: 'nothing_to_update' });
+
+		if (title) post.title = title;
+		if (body) post.body = body;
+		await post.save();
+
+		return res.json({
+			id: post.id,
+			title: post.title,
+			body: post.body,
+			created_at: post.created_at,
+			author_id: post.author_id,
+			likes_count: post.likes_count ?? 0,
+		});
+	} catch (e) {
+		console.error('PUT /api/posts/:id error', e);
+		return res.status(500).json({ error: 'internal' });
+	}
+});
+
+// Delete post (author, moderator, admin)
+router.delete('/:id', requireAuth, async (req, res) => {
+	try {
+		const { id } = req.params;
+		const post = await Post.findByPk(id);
+		if (!post) return res.status(404).json({ error: 'not_found' });
+
+		const me = req.user; // { sub, role, username }
+		const canModify = me && (me.sub === post.author_id || me.role === 'admin' || me.role === 'moderator');
+		if (!canModify) return res.status(403).json({ error: 'forbidden' });
+
+		// Remove related rows first
+		await Comment.destroy({ where: { post_id: id } });
+		await PostLike.destroy({ where: { post_id: id } });
+		await post.destroy();
+		return res.status(204).end();
+	} catch (e) {
+		console.error('DELETE /api/posts/:id error', e);
+		return res.status(500).json({ error: 'internal' });
 	}
 });
 
