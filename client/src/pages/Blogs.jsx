@@ -16,7 +16,7 @@ export default function Blogs() {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiFetch('/api/posts');
+      const res = await apiFetch('/api/posts', { accessToken });
       if (!res.ok) throw new Error('Failed to fetch posts');
       const data = await res.json();
       setPosts(data);
@@ -53,11 +53,11 @@ export default function Blogs() {
   };
 
   return (
-    <div style={{ maxWidth: 500, margin: '0 auto', padding: 24 }}>
-      <h1 style={{ textAlign: 'center', marginBottom: 24 }}>Blogi</h1>
-      <form onSubmit={handleSubmit} style={{ marginBottom: 32, background: '#f9f9f9', padding: 16, borderRadius: 8, boxShadow: '0 2px 8px #eee' }}>
-        <div style={{ marginBottom: 12 }}>
-          <label htmlFor="title" style={{ display: 'block', fontWeight: 'bold', marginBottom: 4 }}>Tytuł</label>
+    <div className="max-w-xl mx-auto p-6 sm:p-8">
+      <h1 className="text-center mb-6 text-2xl font-semibold">Blogi</h1>
+      <form onSubmit={handleSubmit} className="card mb-8 space-y-4">
+        <div>
+          <label htmlFor="title" className="block font-medium mb-1">Tytuł</label>
           <input
             id="title"
             type="text"
@@ -65,38 +65,44 @@ export default function Blogs() {
             value={title}
             onChange={e => setTitle(e.target.value)}
             required
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+            className="input"
           />
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <label htmlFor="body" style={{ display: 'block', fontWeight: 'bold', marginBottom: 4 }}>Treść</label>
+        <div>
+          <label htmlFor="body" className="block font-medium mb-1">Treść</label>
           <textarea
             id="body"
             placeholder="Treść"
             value={body}
             onChange={e => setBody(e.target.value)}
             required
-            rows={4}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', resize: 'vertical' }}
+            rows={6}
+            className="input resize-y min-h-[8rem]"
           />
         </div>
-        <button type="submit" style={{ padding: '8px 16px', borderRadius: 4, background: '#007bff', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Dodaj post</button>
+        <button type="submit" className="btn">Dodaj post</button>
       </form>
-      {error && <div style={{ color: 'red', marginBottom: 16 }}>{error}</div>}
-      {loading ? <div>Ładowanie...</div> : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+      {error && <div className="text-red-600 dark:text-red-400 mb-4">{error}</div>}
+      {loading ? (
+        <div className="text-sm text-neutral-500">Ładowanie...</div>
+      ) : (
+        <ul className="list-none p-0 m-0 space-y-6">
           {posts.map(post => (
-            <li key={post.id} style={{ marginBottom: 24, background: '#fff', padding: 16, borderRadius: 8, boxShadow: '0 1px 4px #eee' }}>
-              <Link to={`/blogs/${post.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                <strong style={{ fontSize: 18 }}>{post.title}</strong>
-                <div style={{ margin: '8px 0', color: '#333' }}>
-                  {/* Author will be shown here if available */}
+            <li key={post.id} className="card hover:shadow-md transition-shadow">
+              <Link to={`/blogs/${post.id}`} className="block no-underline">
+                <strong className="text-lg">{post.title}</strong>
+                <div className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
                   {post.author?.username ? `Autor: ${post.author.username}` : 'Autor: nieznany'}
                 </div>
-                <div style={{ margin: '8px 0', color: '#333' }}>
+                <div className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
+                  Polubienia: {post.likes_count ?? 0}
+                </div>
+                <div className="mt-3 text-neutral-800 dark:text-neutral-200">
                   {post.body && <ReactMarkdown>{post.body}</ReactMarkdown>}
                 </div>
-                <small style={{ color: '#888' }}>{new Date(post.created_at).toLocaleString()}</small>
+                <small className="block mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+                  {new Date(post.created_at).toLocaleString()}
+                </small>
               </Link>
             </li>
           ))}

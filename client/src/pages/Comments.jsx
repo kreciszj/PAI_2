@@ -51,33 +51,37 @@ export default function Comments() {
   };
 
   return (
-    <div style={{ marginTop: 32 }}>
-      <h3>Komentarze</h3>
+    <div className="mt-8">
+      <h3 className="text-xl font-semibold mb-4">Komentarze</h3>
       {accessToken ? (
-        <form onSubmit={handleSubmit} style={{ marginBottom: 16 }}>
+        <form onSubmit={handleSubmit} className="mb-4">
           <textarea
             placeholder="Dodaj komentarz..."
             value={body}
             onChange={e => setBody(e.target.value)}
             required
-            rows={2}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', resize: 'vertical' }}
+            rows={3}
+            className="input resize-y min-h-[5rem]"
           />
-          <button type="submit" style={{ marginTop: 8, padding: '6px 12px', borderRadius: 4, background: '#007bff', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Dodaj komentarz</button>
+          <button type="submit" className="btn mt-2">Dodaj komentarz</button>
         </form>
       ) : (
-        <div style={{ marginBottom: 16, color: '#888' }}>Musisz być zalogowany, aby dodać komentarz.</div>
+        <div className="mb-4 text-neutral-500 dark:text-neutral-400">Musisz być zalogowany, aby dodać komentarz.</div>
       )}
-      {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
-      {loading ? <div>Ładowanie...</div> : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+      {error && <div className="text-red-600 dark:text-red-400 mb-2">{error}</div>}
+      {loading ? (
+        <div className="text-sm text-neutral-500">Ładowanie...</div>
+      ) : (
+        <ul className="list-none p-0 m-0 space-y-3">
           {comments.map(comment => (
-            <li key={comment.id} style={{ marginBottom: 12, background: '#f6f6f6', padding: 8, borderRadius: 6 }}>
-              <div style={{ fontWeight: 'bold', marginBottom: 2 }}>
+            <li key={comment.id} className="card p-4">
+              <div className="font-medium mb-1">
                 {comment.author?.username || 'Nieznany użytkownik'}
               </div>
-              <div>{comment.body}</div>
-              <small style={{ color: '#888' }}>{new Date(comment.createdAt).toLocaleString()}</small>
+              <div className="text-neutral-800 dark:text-neutral-200">{comment.body}</div>
+              <small className="block mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+                {new Date(comment.createdAt).toLocaleString()}
+              </small>
             </li>
           ))}
         </ul>

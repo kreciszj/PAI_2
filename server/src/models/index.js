@@ -57,7 +57,20 @@ export const Post = sequelize.define('Post', {
   body: { type: DataTypes.TEXT, allowNull: false },
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   author_id: { type: DataTypes.UUID, allowNull: false },
+  likes_count: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
 }, { tableName: 'posts', underscored: true });
+
+export const PostLike = sequelize.define('PostLike', {
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
+  user_id: { type: DataTypes.UUID, allowNull: false },
+  post_id: { type: DataTypes.UUID, allowNull: false },
+}, {
+  tableName: 'post_likes',
+  underscored: true,
+  indexes: [
+    { unique: true, fields: ['user_id', 'post_id'] },
+  ],
+});
 
 // ===== RELATIONS =====
 User.hasMany(Post, { foreignKey: 'author_id' });
@@ -77,7 +90,12 @@ Comment.belongsTo(Post, { foreignKey: 'post_id' });
 User.hasMany(Comment, { foreignKey: 'user_id' });
 Comment.belongsTo(User, { foreignKey: 'user_id' });
 
+User.hasMany(PostLike, { foreignKey: 'user_id' });
+PostLike.belongsTo(User, { foreignKey: 'user_id' });
+Post.hasMany(PostLike, { foreignKey: 'post_id' });
+PostLike.belongsTo(Post, { foreignKey: 'post_id' });
+
 // ===== INIT =====
 export async function initDb() {
-  await sequelize.sync();
+  await sequelize.sync({});
 }
