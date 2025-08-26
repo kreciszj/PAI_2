@@ -46,8 +46,8 @@ export default function BlogPost() {
     })();
   }, [accessToken, refreshToken, setTokens]);
 
-  if (loading) return <div>Ładowanie...</div>;
-  if (error) return <div style={{ color: 'red' }}>{error}</div>;
+  if (loading) return <div className="text-sm text-neutral-500">Ładowanie...</div>;
+  if (error) return <div className="text-red-600 dark:text-red-400">{error}</div>;
   if (!post) return null;
 
   const toggleLike = async () => {
@@ -116,15 +116,14 @@ export default function BlogPost() {
   };
 
   return (
-    <div style={{ maxWidth: 500, margin: '0 auto', padding: 24 }}>
+    <div className="max-w-xl mx-auto p-6 sm:p-8">
       {isEditing ? (
-        <form onSubmit={saveEdit} style={{ marginBottom: 16 }}>
+        <form onSubmit={saveEdit} className="card mb-4 space-y-2">
           <input
             value={editTitle}
             onChange={e => setEditTitle(e.target.value)}
             className="input"
             placeholder="Tytuł"
-            style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 6, marginBottom: 8 }}
           />
           <textarea
             value={editBody}
@@ -132,39 +131,42 @@ export default function BlogPost() {
             rows={6}
             className="input"
             placeholder="Treść"
-            style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 6, marginBottom: 8 }}
           />
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button type="submit" disabled={saving} className="btn" style={{ padding: '6px 12px' }}>
+          <div className="flex gap-2 pt-2">
+            <button type="submit" disabled={saving} className="btn">
               {saving ? 'Zapisywanie…' : 'Zapisz'}
             </button>
-            <button type="button" onClick={cancelEdit} className="btn-ghost" style={{ padding: '6px 12px' }}>Anuluj</button>
+            <button type="button" onClick={cancelEdit} className="btn-ghost">Anuluj</button>
           </div>
         </form>
       ) : (
-        <h2 style={{ fontSize: 24, marginBottom: 12 }}>{post.title}</h2>
+        <h2 className="text-2xl font-semibold mb-3">{post.title}</h2>
       )}
-      <div style={{ marginBottom: 16 }}>
+      <div className="mb-4 text-neutral-900 dark:text-neutral-100">
         {!isEditing && post.body && <ReactMarkdown>{post.body}</ReactMarkdown>}
       </div>
       {canModify && !isEditing && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          <button onClick={startEdit} className="btn" style={{ padding: '6px 12px' }}>Edytuj</button>
-          <button onClick={deletePost} disabled={deleting} className="btn danger" style={{ padding: '6px 12px', background: '#ef4444', color: '#fff' }}>
+        <div className="flex gap-2 mb-3">
+          <button onClick={startEdit} className="btn">Edytuj</button>
+          <button onClick={deletePost} disabled={deleting} className="btn bg-red-600 hover:bg-red-500">
             {deleting ? 'Usuwanie…' : 'Usuń'}
           </button>
         </div>
       )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-        <button onClick={toggleLike} disabled={liking} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #ccc', background: post.likedByMe ? '#ef4444' : '#10b981', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+      <div className="flex items-center gap-3 mb-3">
+        <button
+          onClick={toggleLike}
+          disabled={liking}
+          className={`btn ${post.likedByMe ? 'bg-red-600 hover:bg-red-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}
+        >
           {post.likedByMe ? 'Nie lubię' : 'Lubię to'}
         </button>
-        <span style={{ color: '#555' }}>Polubienia: {post.likes_count ?? 0}</span>
+        <span className="text-neutral-600 dark:text-neutral-300">Polubienia: {post.likes_count ?? 0}</span>
       </div>
-      <div style={{ color: '#666', marginBottom: 8 }}>
+      <div className="text-neutral-600 dark:text-neutral-300 mb-2">
         {post.author?.username ? `Autor: ${post.author.username}` : null}
       </div>
-      <small style={{ color: '#888' }}>{new Date(post.created_at).toLocaleString()}</small>
+      <small className="text-neutral-500 dark:text-neutral-400">{new Date(post.created_at).toLocaleString()}</small>
   <Comments />
     </div>
   );
