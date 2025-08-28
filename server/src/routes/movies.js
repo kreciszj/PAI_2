@@ -153,3 +153,51 @@ router.post('/:id/comments', requireAuth, async (req, res) => {
 });
 
 export default router;
+// Update movie comment
+router.put('/:movieId/comments/:commentId', requireAuth, async (req, res) => {
+  try {
+    const { movieId, commentId } = req.params;
+    let { body } = req.body || {};
+    if (typeof body !== 'string' || !body.trim()) return res.status(400).json({ error: 'comment_required' });
+
+    const movie = await Movie.findByPk(movieId);
+    if (!movie) return res.status(404).json({ error: 'not_found' });
+
+    const comment = await Comment.findByPk(commentId, { include: [{ model: User, attributes: ['id','username'] }] });
+    if (!comment || comment.movie_id !== movieId) return res.status(404).json({ error: 'not_found' });
+
+    const me = req.user;
+    const canModify = me && (me.sub === comment.user_id || me.role === 'admin' || me.role === 'moderator');
+    if (!canModify) return res.status(403).json({ error: 'forbidden' });
+
+    comment.body = body.trim();
+    await comment.save();
+
+    return res.json({ id: comment.id, body: comment.body, author: comment.User ? { id: comment.User.id, username: comment.User.username } : null, createdAt: comment.createdAt });
+  } catch (e) {
+    console.error('PUT /api/movies/:movieId/comments/:commentId error', e);
+    res.status(500).json({ error: 'internal' });
+  }
+});
+
+// Delete movie comment
+router.delete('/:movieId/comments/:commentId', requireAuth, async (req, res) => {
+  try {
+    const { movieId, commentId } = req.params;
+    const movie = await Movie.findByPk(movieId);
+    if (!movie) return res.status(404).json({ error: 'not_found' });
+
+    const comment = await Comment.findByPk(commentId);
+    if (!comment || comment.movie_id !== movieId) return res.status(404).json({ error: 'not_found' });
+
+    const me = req.user;
+    const canModify = me && (me.sub === comment.user_id || me.role === 'admin' || me.role === 'moderator');
+    if (!canModify) return res.status(403).json({ error: 'forbidden' });
+
+    await comment.destroy();
+    return res.status(204).end();
+  } catch (e) {
+    console.error('DELETE /api/movies/:movieId/comments/:commentId error', e);
+    res.status(500).json({ error: 'internal' });
+  }
+});
