@@ -210,6 +210,62 @@ router.post('/:id/comments', requireAuth, async (req, res) => {
 	}
 });
 
+	// PUT /api/posts/:postId/comments/:commentId — update comment (author/mod/admin)
+	router.put('/:postId/comments/:commentId', requireAuth, async (req, res) => {
+		try {
+			const { postId, commentId } = req.params;
+			let { body } = req.body || {};
+			if (typeof body !== 'string' || !body.trim()) {
+				return res.status(400).json({ error: 'comment_required' });
+			}
+
+			const post = await Post.findByPk(postId);
+			if (!post) return res.status(404).json({ error: 'not_found' });
+
+			const comment = await Comment.findByPk(commentId, { include: [{ model: User, attributes: ['id','username'] }] });
+			if (!comment || comment.post_id !== postId) return res.status(404).json({ error: 'not_found' });
+
+			const me = req.user; // { sub, role }
+			const canModify = me && (me.sub === comment.user_id || me.role === 'admin' || me.role === 'moderator');
+			if (!canModify) return res.status(403).json({ error: 'forbidden' });
+
+			comment.body = body.trim();
+			await comment.save();
+
+			return res.json({
+				id: comment.id,
+				body: comment.body,
+				author: comment.User ? { id: comment.User.id, username: comment.User.username } : null,
+				createdAt: comment.created_at ? new Date(comment.created_at).toISOString() : null,
+			});
+		} catch (e) {
+			console.error('PUT /api/posts/:postId/comments/:commentId error', e);
+			return res.status(500).json({ error: 'internal' });
+		}
+	});
+
+	// DELETE /api/posts/:postId/comments/:commentId — delete comment (author/mod/admin)
+	router.delete('/:postId/comments/:commentId', requireAuth, async (req, res) => {
+		try {
+			const { postId, commentId } = req.params;
+			const post = await Post.findByPk(postId);
+			if (!post) return res.status(404).json({ error: 'not_found' });
+
+			const comment = await Comment.findByPk(commentId);
+			if (!comment || comment.post_id !== postId) return res.status(404).json({ error: 'not_found' });
+
+			const me = req.user; // { sub, role }
+			const canModify = me && (me.sub === comment.user_id || me.role === 'admin' || me.role === 'moderator');
+			if (!canModify) return res.status(403).json({ error: 'forbidden' });
+
+			await comment.destroy();
+			return res.status(204).end();
+		} catch (e) {
+			console.error('DELETE /api/posts/:postId/comments/:commentId error', e);
+			return res.status(500).json({ error: 'internal' });
+		}
+	});
+
 export default router;
 
 // ===== Likes =====

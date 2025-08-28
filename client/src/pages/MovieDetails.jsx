@@ -15,6 +15,11 @@ export default function MovieDetails() {
     const [comment, setComment] = useState('');
     const [submittingComment, setSubmittingComment] = useState(false);
     const [error, setError] = useState(null);
+    const [me, setMe] = useState(null);
+    const [editingId, setEditingId] = useState(null);
+    const [editBody, setEditBody] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
 
     async function load() {
         setLoading(true);
@@ -24,6 +29,14 @@ export default function MovieDetails() {
     }
 
     useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
+
+    useEffect(() => {
+        (async () => {
+            if (!accessToken) { setMe(null); return; }
+            const r = await apiFetch('/api/auth/me', { accessToken, refreshToken, setTokens });
+            if (r.ok) setMe(await r.json());
+        })();
+    }, [accessToken, refreshToken, setTokens]);
 
     async function submitRating(e) {
         e.preventDefault();
@@ -53,6 +66,50 @@ export default function MovieDetails() {
         setComment('');
         await load();
         setSubmittingComment(false);
+    }
+
+    function canModify(c) {
+        if (!me) return false;
+        const isAuthor = c.author?.id && me.id === c.author.id;
+        const elevated = me.role === 'admin' || me.role === 'moderator';
+        return isAuthor || elevated;
+    }
+
+    function startEdit(c) {
+        setEditingId(c.id);
+        setEditBody(c.body || '');
+    }
+
+    function cancelEdit() {
+        setEditingId(null);
+        setEditBody('');
+    }
+
+    async function saveEdit(commentId) {
+        if (!editingId || editingId !== commentId) return;
+        setSaving(true);
+        setError(null);
+        const r = await apiFetch(`/api/movies/${id}/comments/${commentId}`, {
+            method: 'PUT',
+            body: { body: editBody },
+            accessToken, refreshToken, setTokens,
+        });
+        if (!r.ok) setError('Failed to update comment');
+        cancelEdit();
+        await load();
+        setSaving(false);
+    }
+
+    async function deleteComment(commentId) {
+        if (!confirm('Delete this comment?')) return;
+        setDeletingId(commentId);
+        setError(null);
+        const r = await apiFetch(`/api/movies/${id}/comments/${commentId}`, {
+            method: 'DELETE', accessToken, refreshToken, setTokens,
+        });
+        if (!r.ok && r.status !== 204) setError('Failed to delete comment');
+        await load();
+        setDeletingId(null);
     }
 
     if (loading) return <div className="text-center text-sm opacity-70">Loading…</div>;
@@ -110,10 +167,30 @@ export default function MovieDetails() {
                 <div className="grid gap-3">
                     {data.comments?.length ? data.comments.map(c => (
                         <article key={c.id} className="card">
-                            <div className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">
-                                {c.author ? `@${c.author.username}` : '—'} • {new Date(c.createdAt).toLocaleString()}
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <div className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">
+                                        {c.author ? `@${c.author.username}` : '—'} • {new Date(c.createdAt).toLocaleString()}
+                                    </div>
+                                    {editingId === c.id ? (
+                                        <div className="grid gap-2">
+                                            <textarea className="input min-h-[90px]" value={editBody} onChange={e => setEditBody(e.target.value)} />
+                                            <div className="flex gap-2">
+                                                <button className="btn" disabled={saving} onClick={() => saveEdit(c.id)}>{saving ? 'Saving…' : 'Save'}</button>
+                                                <button className="btn-ghost" onClick={cancelEdit}>Cancel</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm">{c.body}</div>
+                                    )}
+                                </div>
+                                {canModify(c) && editingId !== c.id && (
+                                    <div className="flex gap-2">
+                                        <button className="btn" onClick={() => startEdit(c)}>Edit</button>
+                                        <button className="btn bg-red-600 hover:bg-red-500" disabled={deletingId === c.id} onClick={() => deleteComment(c.id)}>{deletingId === c.id ? 'Deleting…' : 'Delete'}</button>
+                                    </div>
+                                )}
                             </div>
-                            <div className="text-sm">{c.body}</div>
                         </article>
                     )) : <div className="text-sm opacity-70">No comments yet.</div>}
                 </div>

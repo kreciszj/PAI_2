@@ -5,11 +5,16 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function Comments() {
   const { id } = useParams();
-  const { accessToken } = useAuth();
+  const { accessToken, refreshToken, setTokens } = useAuth();
   const [comments, setComments] = useState([]);
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [me, setMe] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editBody, setEditBody] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const fetchComments = async () => {
     setLoading(true);
@@ -30,6 +35,16 @@ export default function Comments() {
     fetchComments();
   }, [id]);
 
+  useEffect(() => {
+    (async () => {
+      if (!accessToken) { setMe(null); return; }
+      try {
+        const res = await apiFetch('/api/auth/me', { accessToken, refreshToken, setTokens });
+        if (res.ok) setMe(await res.json());
+      } catch {}
+    })();
+  }, [accessToken, refreshToken, setTokens]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -37,7 +52,7 @@ export default function Comments() {
       const res = await apiFetch(`/api/posts/${id}/comments`, {
         method: 'POST',
         body: { body },
-        accessToken
+        accessToken, refreshToken, setTokens,
       });
       if (!res.ok) {
         const errData = await res.json();
@@ -47,6 +62,67 @@ export default function Comments() {
       fetchComments();
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  const canModify = (c) => {
+    if (!me) return false;
+    const isAuthor = c.author?.id && me.id === c.author.id;
+    const elevated = me.role === 'admin' || me.role === 'moderator';
+    return isAuthor || elevated;
+  };
+
+  const startEdit = (c) => {
+    setEditingId(c.id);
+    setEditBody(c.body || '');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditBody('');
+  };
+
+  const saveEdit = async (commentId) => {
+    if (!editingId || editingId !== commentId) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await apiFetch(`/api/posts/${id}/comments/${commentId}`, {
+        method: 'PUT',
+        body: { body: editBody },
+        accessToken, refreshToken, setTokens,
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || 'Failed to update comment');
+      }
+      cancelEdit();
+      await fetchComments();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteComment = async (commentId) => {
+    if (!confirm('Usunąć komentarz?')) return;
+    setDeletingId(commentId);
+    setError(null);
+    try {
+      const res = await apiFetch(`/api/posts/${id}/comments/${commentId}`, {
+        method: 'DELETE',
+        accessToken, refreshToken, setTokens,
+      });
+      if (!res.ok && res.status !== 204) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || 'Failed to delete comment');
+      }
+      await fetchComments();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -75,13 +151,42 @@ export default function Comments() {
         <ul className="list-none p-0 m-0 space-y-3">
           {comments.map(comment => (
             <li key={comment.id} className="card p-4">
-              <div className="font-medium mb-1">
-                {comment.author?.username || 'Nieznany użytkownik'}
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-medium mb-1">
+                    {comment.author?.username || 'Nieznany użytkownik'}
+                  </div>
+                  {editingId === comment.id ? (
+                    <div className="grid gap-2">
+                      <textarea
+                        value={editBody}
+                        onChange={e => setEditBody(e.target.value)}
+                        rows={3}
+                        className="input min-h-[4rem]"
+                      />
+                      <div className="flex gap-2">
+                        <button className="btn" disabled={saving} onClick={() => saveEdit(comment.id)}>
+                          {saving ? 'Zapisywanie…' : 'Zapisz'}
+                        </button>
+                        <button className="btn-ghost" onClick={cancelEdit}>Anuluj</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-neutral-800 dark:text-neutral-200">{comment.body}</div>
+                  )}
+                  <small className="block mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+                    {new Date(comment.createdAt).toLocaleString()}
+                  </small>
+                </div>
+                {canModify(comment) && editingId !== comment.id && (
+                  <div className="flex gap-2">
+                    <button className="btn" onClick={() => startEdit(comment)}>Edytuj</button>
+                    <button className="btn bg-red-600 hover:bg-red-500" disabled={deletingId === comment.id} onClick={() => deleteComment(comment.id)}>
+                      {deletingId === comment.id ? 'Usuwanie…' : 'Usuń'}
+                    </button>
+                  </div>
+                )}
               </div>
-              <div className="text-neutral-800 dark:text-neutral-200">{comment.body}</div>
-              <small className="block mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-                {new Date(comment.createdAt).toLocaleString()}
-              </small>
             </li>
           ))}
         </ul>
