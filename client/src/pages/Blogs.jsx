@@ -70,7 +70,7 @@ export default function Blogs() {
 
   return (
     <div className="max-w-xl mx-auto p-6 sm:p-8">
-      <h1 className="text-center mb-6 text-2xl font-semibold">Blogi</h1>
+      <h1 className="text-center mb-6 text-2xl font-semibold">Posty</h1>
       <form onSubmit={handleSubmit} className="card mb-8 space-y-4">
         <div>
           <label htmlFor="title" className="block font-medium mb-1">Tytuł</label>
