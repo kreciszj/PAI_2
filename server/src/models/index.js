@@ -4,7 +4,6 @@ import { config } from '../config/index.js';
 export const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: config.dbPath,
-  logging: false,
 });
 
 // ===== MODELE =====
