@@ -2,6 +2,7 @@ import { NavLink, Outlet, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '../lib/api';
+import ThemeToggle from './ThemeToggle';
 
 export default function Layout() {
   const { accessToken, refreshToken, setTokens, clear } = useAuth();
@@ -11,7 +12,7 @@ export default function Layout() {
     (async () => {
       const r = await apiFetch('/api/auth/me', { accessToken, refreshToken, setTokens });
       if (r?.ok) setMe(await r.json());
-    })();
+    })(); 
   }, [accessToken, refreshToken, setTokens]);
 
   const link = (to, label, end=false) => (
@@ -34,6 +35,7 @@ export default function Layout() {
             {link('/blogs', 'Społeczność')}
           </nav>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             {me && <Link to="/settings" className="btn-ghost">@{me.username}</Link>}
             <button className="btn-ghost" onClick={clear}>Wyloguj</button>
           </div>
