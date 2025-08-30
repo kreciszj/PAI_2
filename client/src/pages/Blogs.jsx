@@ -3,6 +3,8 @@ import { apiFetch } from '../lib/api';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 
 export default function Blogs() {
   const { accessToken } = useAuth();
@@ -68,7 +70,7 @@ export default function Blogs() {
 
   return (
     <div className="max-w-xl mx-auto p-6 sm:p-8">
-      <h1 className="text-center mb-6 text-2xl font-semibold">Blogi</h1>
+      <h1 className="text-center mb-6 text-2xl font-semibold">Posty</h1>
       <form onSubmit={handleSubmit} className="card mb-8 space-y-4">
         <div>
           <label htmlFor="title" className="block font-medium mb-1">Tytuł</label>
@@ -162,8 +164,12 @@ export default function Blogs() {
                     {post.movies.length > 5 && <span className="text-neutral-500">+{post.movies.length - 5} więcej</span>}
                   </div>
                 )}
-                <div className="mt-3 text-neutral-800 dark:text-neutral-200">
-                  {post.body && <ReactMarkdown>{post.body}</ReactMarkdown>}
+                <div className="mt-3 text-neutral-800 dark:text-neutral-200 prose prose-sm dark:prose-invert max-w-none">
+                  {post.body && (
+                    <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+                      {post.body}
+                    </ReactMarkdown>
+                  )}
                 </div>
                 <small className="block mt-3 text-xs text-neutral-500 dark:text-neutral-400">
                   {new Date(post.created_at).toLocaleString()}

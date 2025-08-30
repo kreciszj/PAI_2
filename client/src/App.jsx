@@ -4,12 +4,12 @@ import Login from './pages/Login';
 import Movies from './pages/Movies';
 import MoviesTop from './pages/MoviesTop';
 import Blogs from './pages/Blogs';
-import MyBlog from './pages/MyBlog';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
 import MovieDetails from './pages/MovieDetails';
 import Register from './pages/Register';
 import BlogPost from './pages/BlogPost';
+import AdminMovieNew from './pages/AdminMovieNew.jsx';
 
 function Private({ children }) {
   const { accessToken } = useAuth();
@@ -28,9 +28,9 @@ export default function App() {
             <Route path="movies/top" element={<MoviesTop />} />
             <Route path="blogs" element={<Blogs />} />
             <Route path="blogs/:id" element={<BlogPost />} />
-            <Route path="my-blog" element={<MyBlog />} />
             <Route path="settings" element={<Settings />} />
             <Route path="movies/:id" element={<MovieDetails />} />
+            <Route path="/admin/movies/new" element={<AdminMovieNew />} />
           </Route>
         </Routes>
       </BrowserRouter>

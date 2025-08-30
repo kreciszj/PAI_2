@@ -7,9 +7,9 @@ export const sequelize = new Sequelize({
   logging: false,
 });
 
-// ===== MODELS =====
+// ===== MODELE =====
 export const User = sequelize.define('User', {
-  id: { type: DataTypes.UUID, primaryKey: true },
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
   username: { type: DataTypes.STRING, unique: true, allowNull: false },
   password_hash: { type: DataTypes.TEXT, allowNull: false },
   role: { type: DataTypes.ENUM('user','moderator','admin'), defaultValue: 'user' },
@@ -24,15 +24,16 @@ export const RefreshToken = sequelize.define('RefreshToken', {
 }, { tableName: 'refresh_tokens', underscored: true });
 
 export const Movie = sequelize.define('Movie', {
-  id: { type: DataTypes.UUID, primaryKey: true },
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
   title: { type: DataTypes.STRING, allowNull: false },
   year: { type: DataTypes.INTEGER },
   director: { type: DataTypes.STRING },
   description: { type: DataTypes.TEXT },
+  cover_url: { type: DataTypes.STRING, allowNull: true },
 }, { tableName: 'movies', underscored: true });
 
 export const Rating = sequelize.define('Rating', {
-  id: { type: DataTypes.UUID, primaryKey: true },
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
   user_id: { type: DataTypes.UUID, allowNull: false },
   movie_id: { type: DataTypes.UUID, allowNull: false },
   value: { type: DataTypes.INTEGER, allowNull: false, validate: { min: 1, max: 10 } },
@@ -43,7 +44,7 @@ export const Rating = sequelize.define('Rating', {
 });
 
 export const Comment = sequelize.define('Comment', {
-  id: { type: DataTypes.UUID, primaryKey: true },
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
   user_id: { type: DataTypes.UUID, allowNull: false },
   movie_id: { type: DataTypes.UUID, allowNull: true },
   post_id: { type: DataTypes.UUID, allowNull: true },
@@ -67,12 +68,9 @@ export const PostLike = sequelize.define('PostLike', {
 }, {
   tableName: 'post_likes',
   underscored: true,
-  indexes: [
-    { unique: true, fields: ['user_id', 'post_id'] },
-  ],
+  indexes: [{ unique: true, fields: ['user_id', 'post_id'] }],
 });
 
-// Join table for Post <-> Movie (many-to-many)
 export const PostMovie = sequelize.define('PostMovie', {
   post_id: { type: DataTypes.UUID, allowNull: false },
   movie_id: { type: DataTypes.UUID, allowNull: false },
@@ -80,12 +78,10 @@ export const PostMovie = sequelize.define('PostMovie', {
   tableName: 'post_movies',
   underscored: true,
   timestamps: false,
-  indexes: [
-    { unique: true, fields: ['post_id', 'movie_id'] },
-  ],
+  indexes: [{ unique: true, fields: ['post_id', 'movie_id'] }],
 });
 
-// ===== RELATIONS =====
+// ===== RELACJE =====
 User.hasMany(Post, { foreignKey: 'author_id' });
 Post.belongsTo(User, { foreignKey: 'author_id' });
 User.hasMany(RefreshToken, { foreignKey: 'user_id' });
@@ -108,21 +104,10 @@ PostLike.belongsTo(User, { foreignKey: 'user_id' });
 Post.hasMany(PostLike, { foreignKey: 'post_id' });
 PostLike.belongsTo(Post, { foreignKey: 'post_id' });
 
-// Many-to-many: posts <-> movies
-Post.belongsToMany(Movie, {
-  through: PostMovie,
-  as: 'movies',
-  foreignKey: 'post_id',
-  otherKey: 'movie_id',
-});
-Movie.belongsToMany(Post, {
-  through: PostMovie,
-  as: 'posts',
-  foreignKey: 'movie_id',
-  otherKey: 'post_id',
-});
+Post.belongsToMany(Movie, { through: PostMovie, as: 'movies', foreignKey: 'post_id', otherKey: 'movie_id' });
+Movie.belongsToMany(Post, { through: PostMovie, as: 'posts', foreignKey: 'movie_id', otherKey: 'post_id' });
 
-// ===== INIT =====
+// ===== INIT + SEED =====
 export async function initDb() {
-  await sequelize.sync({});
+  await sequelize.sync({ alter: true });
 }

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
 import Comments from './Comments';
 import { useAuth } from '../contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 
 export default function BlogPost() {
   const { id } = useParams();
@@ -197,15 +199,23 @@ export default function BlogPost() {
       ) : (
         <h2 className="text-2xl font-semibold mb-3">{post.title}</h2>
       )}
-      <div className="mb-4 text-neutral-900 dark:text-neutral-100">
-        {!isEditing && post.body && <ReactMarkdown>{post.body}</ReactMarkdown>}
+      <div className="mb-4 text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none">
+        {!isEditing && post.body && (
+          <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+            {post.body}
+          </ReactMarkdown>
+        )}
       </div>
       {!isEditing && Array.isArray(post.movies) && post.movies.length > 0 && (
         <div className="mb-4">
           <div className="font-medium mb-2">Powiązane filmy:</div>
           <ul className="list-disc ml-5 text-sm">
             {post.movies.map(m => (
-              <li key={m.id}>{m.title}{m.year ? ` (${m.year})` : ''}</li>
+              <li key={m.id}>
+                <Link to={`/movies/${m.id}`} className="text-emerald-700 dark:text-emerald-400 hover:underline">
+                  {m.title}{m.year ? ` (${m.year})` : ''}
+                </Link>
+              </li>
             ))}
           </ul>
         </div>
