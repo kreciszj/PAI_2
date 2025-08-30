@@ -18,7 +18,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRouter);
 app.use('/api/movies', moviesRouter);
 app.use('/api/posts', postsRouter);
-app.use('/uploads', (await import('express')).default.static(path.resolve('uploads')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), { maxAge: '7d' }));
 app.use('/api/users', usersRouter);
 
 await initDb();

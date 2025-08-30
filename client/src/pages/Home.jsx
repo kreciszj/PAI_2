@@ -9,8 +9,15 @@ const PLACEHOLDER = `data:image/svg+xml;utf8,` +
   <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='64' fill='#9ca3af'>?</text>
 </svg>`);
 
+const API = import.meta.env.VITE_API_URL;
+
+function toAbs(u) {
+  if (!u) return u;
+  return u.startsWith('/uploads/') ? `${API}${u}` : u;
+}
+
 function Cover({ src, alt, size='sm' }) {
-  const [s, setS] = useState(src || PLACEHOLDER);
+  const [s, setS] = useState(toAbs(src) || PLACEHOLDER);
   const w = size === 'sm' ? 96 : 300;
   const h = size === 'sm' ? 144 : 450;
   return (
@@ -19,11 +26,12 @@ function Cover({ src, alt, size='sm' }) {
       alt={alt}
       width={w}
       height={h}
-      style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #ddd', background: '#f3f4f6' }}
+      style={{ objectFit:'cover', borderRadius:8, border:'1px solid #ddd', background:'#f3f4f6' }}
       onError={(e) => { if (s !== PLACEHOLDER) { setS(PLACEHOLDER); e.currentTarget.onerror = null; } }}
     />
   );
 }
+
 
 export default function Home() {
   const { accessToken, refreshToken, setTokens, clear } = useAuth();

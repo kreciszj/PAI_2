@@ -7,30 +7,32 @@ import multer from 'multer';
 import { Movie, Rating, Comment, User, PostMovie } from '../models/index.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 
+
 const router = Router();
 
 // === upload setup ===
-const uploadRoot = path.resolve('uploads');
+const uploadRoot = path.join(process.cwd(), 'uploads');
 const coversDir = path.join(uploadRoot, 'covers');
 fs.mkdirSync(coversDir, { recursive: true });
+
+function isAdmin(req) { return req.user?.role === 'admin'; }
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, coversDir),
+  filename: (req, file, cb) => {
+    const ext = (path.extname(file.originalname) || '.jpg').toLowerCase();
+    cb(null, `${req.params.id}${ext}`);
+  }
+});
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, coversDir),
-    filename: (req, file, cb) => {
-      const ext = (path.extname(file.originalname) || '.jpg').toLowerCase();
-      cb(null, `${req.params.id}${ext}`);
-    },
-  }),
+  storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (/^image\/(png|jpe?g|webp)$/.test(file.mimetype)) cb(null, true);
     else cb(new Error('invalid_file_type'));
-  },
+  }
 });
 
-function isAdmin(req) {
-  return req.user?.role === 'admin';
-}
 
 // GET /api/movies
 router.get('/', async (_req, res) => {
@@ -44,6 +46,7 @@ router.get('/', async (_req, res) => {
     coverUrl: m.cover_url ?? null,
   })));
 });
+
 
 // GET /api/movies/:id
 router.get('/:id', async (req, res) => {
@@ -155,8 +158,8 @@ router.delete('/:id', requireAuth, async (req, res) => {
 
     // remove file if stored locally
     if (movie.cover_url && movie.cover_url.startsWith('/uploads/covers/')) {
-      const filePath = path.join(uploadRoot, movie.cover_url.replace('/uploads/', ''));
-      fs.promises.unlink(filePath).catch(() => {});
+      const abs = path.join(uploadRoot, 'covers', path.basename(movie.cover_url));
+      fs.promises.unlink(abs).catch(() => {});
     }
 
     await movie.destroy();
@@ -175,8 +178,15 @@ router.post('/:id/cover', requireAuth, (req, res, next) => {
   try {
     const movie = await Movie.findByPk(req.params.id);
     if (!movie) return res.status(404).json({ error: 'not_found' });
-    const ext = path.extname(req.file.filename).toLowerCase();
-    movie.cover_url = `/uploads/covers/${req.params.id}${ext}`;
+    if (!req.file) return res.status(400).json({ error: 'file_required' });
+
+    const newRel = `/uploads/covers/${req.file.filename}`;
+    if (movie.cover_url && movie.cover_url.startsWith('/uploads/covers/') && movie.cover_url !== newRel) {
+      const oldAbs = path.join(uploadRoot, 'covers', path.basename(movie.cover_url));
+      fs.promises.unlink(oldAbs).catch(() => {});
+    }
+
+    movie.cover_url = newRel;
     await movie.save();
     res.json({ coverUrl: movie.cover_url });
   } catch (e) {
