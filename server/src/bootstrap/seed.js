@@ -1,5 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import bcrypt from 'bcryptjs';
+import path from 'path';
+import fs from 'fs';
 import { config } from '../config/index.js';
 import { User, Movie } from '../models/index.js';
 
@@ -24,33 +26,51 @@ export async function seed() {
   if (config.seed.sampleData) {
     const count = await Movie.count();
     if (count === 0) {
-      await Movie.bulkCreate([
-        {
-          id: uuid(),
-          title: 'Inception',
-          year: 2010,
-          director: 'Christopher Nolan',
-          description: 'Sci-fi heist.',
-          cover_url: '/uploads/covers/inception.jpg',
-        },
-        {
-          id: uuid(),
-          title: 'The Matrix',
-          year: 1999,
-          director: 'Lana & Lilly Wachowski',
-          description: 'Reality bend.',
-          cover_url: '/uploads/covers/matrix.jpg', 
-        },
-        {
-          id: uuid(),
-          title: 'Interstellar',
-          year: 2014,
-          director: 'Christopher Nolan',
-          description: 'Space & time.',
-          cover_url: null,
-        },
-      ]);
-      console.log('[seed] inserted sample movies');
+      const jsonPath = path.resolve('./src/bootstrap/top100_movies.json');
+      let moviesToAdd = [];
+      if (fs.existsSync(jsonPath)) {
+        const rawData = fs.readFileSync(jsonPath, 'utf-8').trim();
+        if (rawData) {
+          const moviesData = JSON.parse(rawData);
+          moviesToAdd = moviesData.map(m => ({
+            id: uuid(),
+            title: m.title,
+            year: m.year ?? null,
+            director: m.director ?? null,
+            description: m.description ?? null,
+          }));
+          console.log('[seed] imported movies from JSON');
+        }
+      }
+
+      if (moviesToAdd.length === 0) {
+        moviesToAdd = [
+          {
+            id: uuid(),
+            title: 'Inception',
+            year: 2010,
+            director: 'Christopher Nolan',
+            description: 'Sci-fi heist.'
+          },
+          {
+            id: uuid(),
+            title: 'The Matrix',
+            year: 1999,
+            director: 'Lana & Lilly Wachowski',
+            description: 'Reality bend.'
+          },
+          {
+            id: uuid(),
+            title: 'Interstellar',
+            year: 2014,
+            director: 'Christopher Nolan',
+            description: 'Space & time.'
+          },
+        ];
+        console.log('[seed] inserted default sample movies');
+      }
+
+      await Movie.bulkCreate(moviesToAdd);
     }
   }
 }
