@@ -25,7 +25,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<Private><Layout /></Private>}>
             <Route index element={<Movies />} />
-            <Route path="movies/top" element={<MoviesTop />} />
+            <Route path="top" element={<MoviesTop />} />
             <Route path="blogs" element={<Blogs />} />
             <Route path="blogs/:id" element={<BlogPost />} />
             <Route path="settings" element={<Settings />} />
