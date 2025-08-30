@@ -16,7 +16,7 @@ function toAbs(u) {
   return u.startsWith('/uploads/') ? `${API}${u}` : u;
 }
 
-function Cover({ src, alt, size='sm' }) {
+function Cover({ src, alt, size = 'sm' }) {
   const [s, setS] = useState(toAbs(src) || PLACEHOLDER);
   const w = size === 'sm' ? 96 : 300;
   const h = size === 'sm' ? 144 : 450;
@@ -26,7 +26,7 @@ function Cover({ src, alt, size='sm' }) {
       alt={alt}
       width={w}
       height={h}
-      style={{ objectFit:'cover', borderRadius:8, border:'1px solid #ddd', background:'#f3f4f6' }}
+      style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #ddd', background: '#f3f4f6' }}
       onError={(e) => { if (s !== PLACEHOLDER) { setS(PLACEHOLDER); e.currentTarget.onerror = null; } }}
     />
   );
@@ -48,25 +48,16 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       const r = await apiFetch('/api/movies');
-      if (r.ok) setMovies(await r.json());
+      if (!r.ok) return;
+      const data = await r.json();
+      data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setMovies(data.slice(0, 24));
     })();
   }, []);
 
   return (
     <div style={{ margin: 24 }}>
       <h1>Home</h1>
-      {me?.role === 'admin' && (
-        <div className="mb-4">
-          <Link
-            to="/admin/movies/new"
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-500 dark:hover:bg-emerald-900"
-            style={{ fontWeight: 600 }}
-          >
-            <span>＋</span>
-            <span>Add movie</span>
-          </Link>
-        </div>
-      )}
 
       {accessToken ? (
         <>
@@ -79,7 +70,7 @@ export default function Home() {
 
       <h2 style={{ marginTop: 24, marginBottom: 12 }}>Ostatnio dodane filmy</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
-        {movies.map(m => (
+        {movies.map((m) => (
           <Link key={m.id} to={`/movies/${m.id}`} className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
             <Cover src={m.coverUrl} alt={m.title} size="sm" />
             <div style={{ fontSize: 12, marginTop: 6 }}>
