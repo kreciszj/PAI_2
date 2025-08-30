@@ -31,6 +31,7 @@ export default function Layout() {
         <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between">
           <nav className="flex items-center gap-1">
             {link('/', 'Baza filmów', true)}
+            {link('/movies/top', 'Ranking')}
             {link('/blogs', 'Blogi')}
             {link('/my-blog', 'Mój Blog')}
           </nav>

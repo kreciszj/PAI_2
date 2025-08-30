@@ -32,6 +32,49 @@ router.get('/', async (req, res) => {
     });
 });
 
+// GET /api/movies/top
+router.get('/top', async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = 10;
+        const offset = (page - 1) * limit;
+
+        const {count, rows} = await Movie.findAndCountAll({
+            limit,
+            offset,
+        });
+
+        const items = await Promise.all(rows.map(async m => {
+            const avgRow = await Rating.findOne({
+                where: {movie_id: m.id},
+                attributes: [[fn('avg', col('value')), 'avg']],
+                raw: true,
+            });
+            const averageRating = avgRow?.avg != null ? Number(parseFloat(avgRow.avg).toFixed(2)) : null;
+
+            return {
+                id: m.id,
+                title: m.title,
+                year: m.year,
+                director: m.director ?? null,
+                description: m.description ?? null,
+                averageRating,
+            };
+        }));
+
+        items.sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0));
+
+        res.json({
+            page,
+            totalPages: Math.ceil(count / limit),
+            items,
+        });
+    } catch (e) {
+        console.error('GET /api/movies/top error', e);
+        res.status(500).json({error: 'internal'});
+    }
+});
+
 // GET /api/movies/:id
 router.get('/:id', async (req, res) => {
   try {
