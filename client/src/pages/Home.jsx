@@ -32,7 +32,6 @@ function Cover({ src, alt, size='sm' }) {
   );
 }
 
-
 export default function Home() {
   const { accessToken, refreshToken, setTokens, clear } = useAuth();
   const [me, setMe] = useState(null);
@@ -56,6 +55,19 @@ export default function Home() {
   return (
     <div style={{ margin: 24 }}>
       <h1>Home</h1>
+      {me?.role === 'admin' && (
+        <div className="mb-4">
+          <Link
+            to="/admin/movies/new"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-500 dark:hover:bg-emerald-900"
+            style={{ fontWeight: 600 }}
+          >
+            <span>＋</span>
+            <span>Add movie</span>
+          </Link>
+        </div>
+      )}
+
       {accessToken ? (
         <>
           <pre>{JSON.stringify(me, null, 2)}</pre>
