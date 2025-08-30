@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 
 export default function Comments() {
   const { id } = useParams();
@@ -172,7 +175,11 @@ export default function Comments() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-neutral-800 dark:text-neutral-200">{comment.body}</div>
+                    <div className="text-neutral-800 dark:text-neutral-200 prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+                        {comment.body}
+                      </ReactMarkdown>
+                    </div>
                   )}
                   <small className="block mt-2 text-xs text-neutral-500 dark:text-neutral-400">
                     {new Date(comment.createdAt).toLocaleString()}
