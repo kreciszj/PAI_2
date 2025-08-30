@@ -82,20 +82,15 @@ router.get('/top', async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = 10;
-    const offset = (page - 1) * limit;
+    const movies = await Movie.findAll();
 
-    const {count, rows} = await Movie.findAndCountAll({
-      limit,
-      offset,
-    });
-
-    const items = await Promise.all(rows.map(async m => {
+    const items = await Promise.all(movies.map(async m => {
       const avgRow = await Rating.findOne({
         where: {movie_id: m.id},
         attributes: [[fn('avg', col('value')), 'avg']],
         raw: true,
       });
-      const averageRating = avgRow?.avg != null ? Number(parseFloat(avgRow.avg).toFixed(2)) : null;
+      const averageRating = avgRow?.avg != null ? Number(parseFloat(avgRow.avg).toFixed(2)) : 0;
 
       return {
         id: m.id,
@@ -107,13 +102,16 @@ router.get('/top', async (req, res) => {
         averageRating,
       };
     }));
-
-    items.sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0));
+    items.sort((a, b) => b.averageRating - a.averageRating);
+    const totalItems = items.length;
+    const totalPages = Math.ceil(totalItems / limit);
+    const paginatedItems = items.slice((page - 1) * limit, page * limit);
 
     res.json({
       page,
-      totalPages: Math.ceil(count / limit),
-      items,
+      totalPages,
+      totalItems,
+      items: paginatedItems,
     });
   } catch (e) {
     console.error('GET /api/movies/top error', e);
