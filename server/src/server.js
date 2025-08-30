@@ -7,6 +7,7 @@ import authRouter from './routes/auth.js';
 import moviesRouter from './routes/movies.js';
 import postsRouter from './routes/posts.js';
 import path from 'path';
+import usersRouter from './routes/users.js';
 
 const app = express();
 app.use(cors({ origin: config.corsOrigin, credentials: false }));
@@ -18,7 +19,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/movies', moviesRouter);
 app.use('/api/posts', postsRouter);
 app.use('/uploads', (await import('express')).default.static(path.resolve('uploads')));
-
+app.use('/api/users', usersRouter);
 
 await initDb();
 await seed();

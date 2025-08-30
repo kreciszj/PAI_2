@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { apiFetch } from '../lib/api.js';
 
 export default function Settings() {
-  const { accessToken, refreshToken, setTokens } = useAuth();
+  const { accessToken, refreshToken, setTokens, clear } = useAuth();
   const [me, setMe] = useState(null);
   const [username, setUsername] = useState('');
   const [savingUser, setSavingUser] = useState(false);
@@ -14,6 +14,12 @@ export default function Settings() {
   const [savingPass, setSavingPass] = useState(false);
   const [passMsg, setPassMsg] = useState(null);
 
+  // Admin: users management
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [usersMsg, setUsersMsg] = useState(null);
+  const [busyUserIds, setBusyUserIds] = useState([]); // track per-row actions
+
   useEffect(() => {
     let ignore = false;
     (async () => {
@@ -23,10 +29,74 @@ export default function Settings() {
         const data = await r.json();
         setMe(data);
         setUsername(data.username || '');
+        // If admin, load users list
+        if (data.role === 'admin') {
+          await loadUsers();
+        } else {
+          setUsers([]);
+        }
       }
     })();
     return () => { ignore = true; };
   }, [accessToken, refreshToken, setTokens]);
+
+  async function loadUsers() {
+    setLoadingUsers(true); setUsersMsg(null);
+    try {
+      const r = await apiFetch('/api/users', { accessToken, refreshToken, setTokens });
+      if (!r.ok) {
+        setUsersMsg('Nie udało się pobrać listy użytkowników');
+        return;
+      }
+      const rows = await r.json();
+      setUsers(rows);
+    } finally {
+      setLoadingUsers(false);
+    }
+  }
+
+  async function saveUserAdmin(u) {
+    setUsersMsg(null);
+    setBusyUserIds(ids => [...ids, u.id]);
+    try {
+      const r = await apiFetch(`/api/users/${u.id}`, {
+        method: 'PATCH',
+        body: { username: u.username, role: u.role },
+        accessToken, refreshToken, setTokens,
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        setUsersMsg(errorToMsg(err?.error));
+        return;
+      }
+      const row = await r.json();
+      setUsers(list => list.map(x => x.id === row.id ? { ...x, ...row } : x));
+      // if I changed my own role/username, refresh /me
+      if (row.id === me?.id) {
+        const meRes = await apiFetch('/api/auth/me', { accessToken, refreshToken, setTokens });
+        if (meRes.ok) setMe(await meRes.json());
+      }
+    } finally {
+      setBusyUserIds(ids => ids.filter(id => id !== u.id));
+    }
+  }
+
+  async function deleteUserAdmin(u) {
+    if (!confirm(`Usunąć użytkownika @${u.username}? Tej operacji nie można cofnąć.`)) return;
+    setUsersMsg(null);
+    setBusyUserIds(ids => [...ids, u.id]);
+    try {
+      const r = await apiFetch(`/api/users/${u.id}`, { method: 'DELETE', accessToken, refreshToken, setTokens });
+      if (!r.ok && r.status !== 204) {
+        const err = await r.json().catch(() => ({}));
+        setUsersMsg(errorToMsg(err?.error));
+        return;
+      }
+      setUsers(list => list.filter(x => x.id !== u.id));
+    } finally {
+      setBusyUserIds(ids => ids.filter(id => id !== u.id));
+    }
+  }
 
   async function submitUsername(e) {
     e.preventDefault();
@@ -76,46 +146,145 @@ export default function Settings() {
     }
   }
 
-  if (!accessToken) return <div style={{ margin: 24 }}>Zaloguj się, aby zarządzać ustawieniami.</div>;
+  if (!accessToken) return (
+    <div className="container-page">
+      <div className="max-w-2xl mx-auto card text-sm">
+        Zaloguj się, aby zarządzać ustawieniami.
+      </div>
+    </div>
+  );
 
   return (
-    <div style={{ maxWidth: 560, margin: '24px auto', padding: 16 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 16 }}>Ustawienia</h1>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <h1 className="text-2xl font-semibold">Ustawienia</h1>
 
-      <section style={{ marginBottom: 24, padding: 16, border: '1px solid #eee', borderRadius: 8 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Zmień nazwę użytkownika</h2>
-        <form onSubmit={submitUsername}>
-          <label style={{ display: 'block', marginBottom: 8 }}>Nazwa użytkownika</label>
-          <input value={username} onChange={(e) => setUsername(e.target.value)}
-                 minLength={3} maxLength={32}
-                 style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 6 }} />
-          <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button disabled={savingUser} type="submit"
-                    style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #999' }}>
-              {savingUser ? 'Zapisywanie…' : 'Zapisz' }
+      <section className="card">
+        <h2 className="text-lg font-semibold mb-3">Zmień nazwę użytkownika</h2>
+        <form onSubmit={submitUsername} className="grid gap-3">
+          <div>
+            <label className="block mb-2 text-sm font-medium">Nazwa użytkownika</label>
+            <input
+              className="input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              minLength={3}
+              maxLength={32}
+            />
+          </div>
+          <div className="mt-1 flex items-center gap-2">
+            <button disabled={savingUser} type="submit" className="btn disabled:opacity-60">
+              {savingUser ? 'Zapisywanie…' : 'Zapisz'}
             </button>
-            {userMsg && <span aria-live="polite">{userMsg}</span>}
+            {userMsg && <span aria-live="polite" className="text-sm">{userMsg}</span>}
           </div>
         </form>
       </section>
 
-      <section style={{ padding: 16, border: '1px solid #eee', borderRadius: 8 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Zmień hasło</h2>
-        <form onSubmit={submitPassword}>
-          <label style={{ display: 'block', marginBottom: 8 }}>Aktualne hasło</label>
-          <input value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
-                 type="password"
-                 style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 6 }} />
-          <label style={{ display: 'block', margin: '12px 0 8px' }}>Nowe hasło</label>
-          <input value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                 type="password" minLength={6}
-                 style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 6 }} />
-          <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button disabled={savingPass} type="submit"
-                    style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #999' }}>
-              {savingPass ? 'Zapisywanie…' : 'Zapisz' }
+      {me?.role === 'admin' && (
+        <section className="card">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Zarządzanie użytkownikami (admin)</h2>
+            <button onClick={loadUsers} disabled={loadingUsers} className="btn-ghost disabled:opacity-60">
+              {loadingUsers ? 'Odświeżanie…' : 'Odśwież'}
             </button>
-            {passMsg && <span aria-live="polite">{passMsg}</span>}
+          </div>
+          {usersMsg && <div className="mb-2 text-sm text-red-600">{usersMsg}</div>}
+          {loadingUsers && users.length === 0 ? (
+            <div className="text-sm text-neutral-500">Ładowanie…</div>
+          ) : users.length === 0 ? (
+            <div className="text-sm text-neutral-500">Brak użytkowników do wyświetlenia.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full table-auto">
+                <thead>
+                  <tr>
+                    <th className="text-left px-3 py-2 border-b border-neutral-200/70 dark:border-neutral-800">Nazwa</th>
+                    <th className="text-left px-3 py-2 border-b border-neutral-200/70 dark:border-neutral-800">Rola</th>
+                    <th className="text-right px-3 py-2 border-b border-neutral-200/70 dark:border-neutral-800">Akcje</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map(u => (
+                    <tr key={u.id}>
+                      <td className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800/60">
+                        <input
+                          className="input"
+                          value={u.username}
+                          onChange={(e) => setUsers(list => list.map(x => x.id === u.id ? { ...x, username: e.target.value } : x))}
+                        />
+                      </td>
+                      <td className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800/60">
+                        {u.id === me?.id ? (
+                          <div title="Nie możesz zmienić własnej roli" className="px-1.5 py-1.5 text-sm text-neutral-600 dark:text-neutral-300">
+                            {u.role}
+                          </div>
+                        ) : (
+                          <select
+                            className="input"
+                            value={u.role}
+                            onChange={(e) => setUsers(list => list.map(x => x.id === u.id ? { ...x, role: e.target.value } : x))}
+                          >
+                            <option value="user">user</option>
+                            <option value="moderator">moderator</option>
+                            <option value="admin">admin</option>
+                          </select>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800/60">
+                        {u.id === me?.id ? (
+                          <div className="text-right text-xs text-neutral-500">Twoje konto</div>
+                        ) : (
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => saveUserAdmin(u)}
+                              disabled={busyUserIds.includes(u.id)}
+                              className="btn disabled:opacity-60"
+                            >{busyUserIds.includes(u.id) ? 'Zapisywanie…' : 'Zapisz'}</button>
+                            <button
+                              onClick={() => deleteUserAdmin(u)}
+                              disabled={busyUserIds.includes(u.id)}
+                              className="btn bg-red-600 hover:bg-red-500 disabled:opacity-60"
+                            >{busyUserIds.includes(u.id) ? 'Usuwanie…' : 'Usuń'}</button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="mt-2 text-xs text-neutral-500">Uwaga: usunięcie użytkownika usuwa także jego wpisy, komentarze i polubienia.</p>
+        </section>
+      )}
+
+      <section className="card">
+        <h2 className="text-lg font-semibold mb-3">Zmień hasło</h2>
+        <form onSubmit={submitPassword} className="grid gap-3">
+          <div>
+            <label className="block mb-2 text-sm font-medium">Aktualne hasło</label>
+            <input
+              className="input"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              type="password"
+            />
+          </div>
+          <div>
+            <label className="block mb-2 text-sm font-medium">Nowe hasło</label>
+            <input
+              className="input"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              type="password"
+              minLength={6}
+            />
+          </div>
+          <div className="mt-1 flex items-center gap-2">
+            <button disabled={savingPass} type="submit" className="btn disabled:opacity-60">
+              {savingPass ? 'Zapisywanie…' : 'Zapisz'}
+            </button>
+            {passMsg && <span aria-live="polite" className="text-sm">{passMsg}</span>}
           </div>
         </form>
       </section>
@@ -131,6 +300,9 @@ function errorToMsg(code) {
     case 'current_password_required': return 'Podaj aktualne hasło';
     case 'invalid_current_password': return 'Aktualne hasło jest nieprawidłowe';
     case 'nothing_to_update': return 'Brak zmian do zapisania';
+    case 'invalid_role': return 'Nieprawidłowa rola';
+  case 'cannot_delete_self': return 'Nie możesz usunąć własnego konta';
     default: return 'Wystąpił błąd';
   }
 }
+
