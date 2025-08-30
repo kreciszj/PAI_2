@@ -9,6 +9,9 @@ export default function Blogs() {
   const [posts, setPosts] = useState([]);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [movies, setMovies] = useState([]);
+  const [movieFilter, setMovieFilter] = useState('');
+  const [selectedMovies, setSelectedMovies] = useState([]); // movie ids
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -29,6 +32,16 @@ export default function Blogs() {
 
   useEffect(() => {
     fetchPosts();
+    // load movies list for linking
+    (async () => {
+      try {
+        const res = await apiFetch('/api/movies');
+        if (res.ok) {
+          const data = await res.json();
+          setMovies(data);
+        }
+      } catch {}
+    })();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -37,7 +50,7 @@ export default function Blogs() {
     try {
       const res = await apiFetch('/api/posts', {
         method: 'POST',
-        body: { title, body },
+        body: { title, body, movieIds: selectedMovies.slice(0, 10) },
         accessToken
       });
       if (!res.ok) {
@@ -46,6 +59,7 @@ export default function Blogs() {
       }
       setTitle('');
       setBody('');
+      setSelectedMovies([]);
       fetchPosts();
     } catch (err) {
       setError(err.message);
@@ -80,6 +94,47 @@ export default function Blogs() {
             className="input resize-y min-h-[8rem]"
           />
         </div>
+        <div>
+          <div className="flex items-baseline justify-between mb-2">
+            <label className="block font-medium">Powiąż filmy (max 10)</label>
+            <span className="text-xs text-neutral-500">Wybrane: {selectedMovies.length}/10</span>
+          </div>
+          <input
+            type="text"
+            placeholder="Szukaj filmu..."
+            value={movieFilter}
+            onChange={e => setMovieFilter(e.target.value)}
+            className="input mb-2"
+          />
+          <div className="max-h-48 overflow-auto border rounded-md p-2 bg-white dark:bg-neutral-900">
+            {movies
+              .filter(m => !movieFilter.trim() || `${m.title} ${m.year ?? ''}`.toLowerCase().includes(movieFilter.toLowerCase()))
+              .map(m => {
+                const checked = selectedMovies.includes(m.id);
+                const disableMore = !checked && selectedMovies.length >= 10;
+                return (
+                  <label key={m.id} className={`flex items-center gap-2 py-1 px-1 rounded hover:bg-neutral-50 dark:hover:bg-neutral-800 ${disableMore ? 'opacity-60' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={disableMore}
+                      onChange={e => {
+                        if (e.target.checked) {
+                          setSelectedMovies(prev => (prev.includes(m.id) || prev.length >= 10) ? prev : [...prev, m.id]);
+                        } else {
+                          setSelectedMovies(prev => prev.filter(x => x !== m.id));
+                        }
+                      }}
+                    />
+                    <span className="text-sm">{m.title} {m.year ? `(${m.year})` : ''}</span>
+                  </label>
+                );
+              })}
+            {movies.length === 0 && (
+              <div className="text-sm text-neutral-500">Brak filmów</div>
+            )}
+          </div>
+        </div>
         <button type="submit" className="btn">Dodaj post</button>
       </form>
       {error && <div className="text-red-600 dark:text-red-400 mb-4">{error}</div>}
@@ -97,6 +152,16 @@ export default function Blogs() {
                 <div className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
                   Polubienia: {post.likes_count ?? 0}
                 </div>
+                {Array.isArray(post.movies) && post.movies.length > 0 && (
+                  <div className="mt-2 text-xs text-neutral-600 dark:text-neutral-300 flex flex-wrap gap-2">
+                    {post.movies.slice(0, 5).map(m => (
+                      <span key={m.id} className="px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 border text-neutral-700 dark:text-neutral-200">
+                        {m.title}{m.year ? ` (${m.year})` : ''}
+                      </span>
+                    ))}
+                    {post.movies.length > 5 && <span className="text-neutral-500">+{post.movies.length - 5} więcej</span>}
+                  </div>
+                )}
                 <div className="mt-3 text-neutral-800 dark:text-neutral-200">
                   {post.body && <ReactMarkdown>{post.body}</ReactMarkdown>}
                 </div>

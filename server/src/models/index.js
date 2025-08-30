@@ -72,6 +72,19 @@ export const PostLike = sequelize.define('PostLike', {
   ],
 });
 
+// Join table for Post <-> Movie (many-to-many)
+export const PostMovie = sequelize.define('PostMovie', {
+  post_id: { type: DataTypes.UUID, allowNull: false },
+  movie_id: { type: DataTypes.UUID, allowNull: false },
+}, {
+  tableName: 'post_movies',
+  underscored: true,
+  timestamps: false,
+  indexes: [
+    { unique: true, fields: ['post_id', 'movie_id'] },
+  ],
+});
+
 // ===== RELATIONS =====
 User.hasMany(Post, { foreignKey: 'author_id' });
 Post.belongsTo(User, { foreignKey: 'author_id' });
@@ -94,6 +107,20 @@ User.hasMany(PostLike, { foreignKey: 'user_id' });
 PostLike.belongsTo(User, { foreignKey: 'user_id' });
 Post.hasMany(PostLike, { foreignKey: 'post_id' });
 PostLike.belongsTo(Post, { foreignKey: 'post_id' });
+
+// Many-to-many: posts <-> movies
+Post.belongsToMany(Movie, {
+  through: PostMovie,
+  as: 'movies',
+  foreignKey: 'post_id',
+  otherKey: 'movie_id',
+});
+Movie.belongsToMany(Post, {
+  through: PostMovie,
+  as: 'posts',
+  foreignKey: 'movie_id',
+  otherKey: 'post_id',
+});
 
 // ===== INIT =====
 export async function initDb() {

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Post, PostLike } from '../models/index.js';
+import { Post, PostLike, Movie, PostMovie } from '../models/index.js';
 import { v4 as uuid } from 'uuid';
 import { Comment, User } from '../models/index.js';
 import { requireAuth } from '../middleware/requireAuth.js';
@@ -9,10 +9,13 @@ const router = Router();
 // Get all posts
 router.get('/', async (req, res) => {
 		try {
-								 const posts = await Post.findAll({
-									 order: [['created_at', 'DESC']],
-									 include: [{ model: User, attributes: ['id', 'username'] }]
-								 });
+							 const posts = await Post.findAll({
+								 order: [['created_at', 'DESC']],
+								 include: [
+									 { model: User, attributes: ['id', 'username'] },
+									 { model: Movie, as: 'movies', attributes: ['id','title','year','director'], through: { attributes: [] } },
+								 ]
+							 });
 
 								 let userId = null;
 								 const hdr = req.headers.authorization || '';
@@ -33,7 +36,8 @@ router.get('/', async (req, res) => {
 										 created_at: post.created_at,
 										 likes_count: post.likes_count ?? 0,
 										 likedByMe,
-										 author: post.User ? { id: post.User.id, username: post.User.username } : null
+										 author: post.User ? { id: post.User.id, username: post.User.username } : null,
+										 movies: Array.isArray(post.movies) ? post.movies.map(m => ({ id: m.id, title: m.title, year: m.year, director: m.director ?? null })) : [],
 									 });
 								 }));
 								 res.json(result);
@@ -42,20 +46,28 @@ router.get('/', async (req, res) => {
 		}
 });
 // Create new post
-router.post('/', requireAuth, async (req, res) => {
-       const { title, body } = req.body;
+		router.post('/', requireAuth, async (req, res) => {
+		       const { title, body, movieIds } = req.body;
        const userId = req.user?.sub;
        const username = req.user?.username;
        if (!title || !body || !userId || !username) return res.status(400).json({ error: 'missing_fields' });
        try {
-	       const post = await Post.create({ title, body, author_id: userId });
+			       const post = await Post.create({ title, body, author_id: userId });
+			       // attach up to 10 movies if provided
+			       if (Array.isArray(movieIds) && movieIds.length) {
+			         const uniqueIds = [...new Set(movieIds)].slice(0, 10);
+			         const movies = await Movie.findAll({ where: { id: uniqueIds } });
+			         await post.setMovies(movies);
+			       }
 	       // Attach author info to response
-	       res.status(201).json({
+			       const withMovies = await Post.findByPk(post.id, { include: [ { model: Movie, as: 'movies', attributes: ['id','title','year','director'], through: { attributes: [] } } ] });
+			       res.status(201).json({
 		 id: post.id,
 		 title: post.title,
 		 body: post.body,
 		 created_at: post.created_at,
-		 author: { id: userId, username }
+				 author: { id: userId, username },
+				 movies: withMovies?.movies?.map(m => ({ id: m.id, title: m.title, year: m.year, director: m.director ?? null })) ?? [],
 	       });
        } catch (err) {
 	       res.status(500).json({ error: 'server_error' });
@@ -65,7 +77,10 @@ router.post('/', requireAuth, async (req, res) => {
 // Get single post by id
 router.get('/:id', async (req, res) => {
 	try {
-		const post = await Post.findByPk(req.params.id, { include: [{ model: User, attributes: ['id', 'username'] }] });
+		const post = await Post.findByPk(req.params.id, { include: [
+			{ model: User, attributes: ['id', 'username'] },
+			{ model: Movie, as: 'movies', attributes: ['id','title','year','director'], through: { attributes: [] } }
+		] });
 		if (!post) return res.status(404).json({ error: 'not_found' });
 
 		let userId = null;
@@ -90,6 +105,7 @@ router.get('/:id', async (req, res) => {
 		  author: post.User ? { id: post.User.id, username: post.User.username } : null,
 		  likes_count: post.likes_count ?? 0,
 		  likedByMe,
+		  movies: Array.isArray(post.movies) ? post.movies.map(m => ({ id: m.id, title: m.title, year: m.year, director: m.director ?? null })) : [],
 		});
 	} catch (err) {
 		res.status(500).json({ error: 'server_error' });
@@ -107,15 +123,24 @@ router.put('/:id', requireAuth, async (req, res) => {
 		const canModify = me && (me.sub === post.author_id || me.role === 'admin' || me.role === 'moderator');
 		if (!canModify) return res.status(403).json({ error: 'forbidden' });
 
-		let { title, body } = req.body || {};
+		let { title, body, movieIds } = req.body || {};
 		if (typeof title === 'string') title = title.trim();
 		if (typeof body === 'string') body = body.trim();
-		if (!title && !body) return res.status(400).json({ error: 'nothing_to_update' });
+		if (!title && !body && !Array.isArray(movieIds)) return res.status(400).json({ error: 'nothing_to_update' });
 
 		if (title) post.title = title;
 		if (body) post.body = body;
 		await post.save();
 
+		// update linked movies if provided
+		if (Array.isArray(movieIds)) {
+			const uniqueIds = [...new Set(movieIds)].slice(0, 10);
+			const movies = await Movie.findAll({ where: { id: uniqueIds } });
+			await post.setMovies(movies);
+		}
+
+		// reload with movies
+		const withMovies = await Post.findByPk(post.id, { include: [{ model: Movie, as: 'movies', attributes: ['id','title','year','director'], through: { attributes: [] } }] });
 		return res.json({
 			id: post.id,
 			title: post.title,
@@ -123,6 +148,7 @@ router.put('/:id', requireAuth, async (req, res) => {
 			created_at: post.created_at,
 			author_id: post.author_id,
 			likes_count: post.likes_count ?? 0,
+			movies: withMovies?.movies?.map(m => ({ id: m.id, title: m.title, year: m.year, director: m.director ?? null })) ?? [],
 		});
 	} catch (e) {
 		console.error('PUT /api/posts/:id error', e);
@@ -144,6 +170,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
 		// Remove related rows first
 		await Comment.destroy({ where: { post_id: id } });
 		await PostLike.destroy({ where: { post_id: id } });
+		await PostMovie.destroy({ where: { post_id: id } });
 		await post.destroy();
 		return res.status(204).end();
 	} catch (e) {
