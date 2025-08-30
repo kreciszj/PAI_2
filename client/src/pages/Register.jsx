@@ -16,19 +16,14 @@ export default function Register() {
     setE(null);
     setL(true);
     try {
-      // 1) rejestracja
       const r = await fetch(`${API}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
       if (r.status === 409) { setE('Nazwa użytkownika zajęta'); return; }
       if (!r.ok) { setE('Błąd danych'); return; }
-
-      // 2) auto-login
       const l = await fetch(`${API}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
       if (!l.ok) { setE('Zaloguj się ręcznie'); return; }
@@ -41,10 +36,16 @@ export default function Register() {
   }
 
   return (
-    <div className="container-page max-w-md">
-      <div className="card">
-        <h1 className="text-xl font-semibold mb-4">Rejestracja</h1>
-        <form onSubmit={submit} className="grid gap-3">
+    <div className="min-h-screen grid place-items-center px-4">
+      <div className="max-w-md w-full card overflow-hidden p-0 slide-up">
+        <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-indigo-500/15 via-emerald-500/10 to-sky-500/15 dark:from-indigo-500/10 dark:via-emerald-500/10 dark:to-sky-500/10">
+          <h1 className="text-2xl font-extrabold">
+            <span className="title-gradient">Dołącz do nas</span>
+          </h1>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">Załóż konto w minutę.</p>
+        </div>
+
+        <form onSubmit={submit} className="px-6 pb-6 pt-4 grid gap-4">
           <input
             className="input"
             placeholder="username (3–32)"
@@ -64,13 +65,13 @@ export default function Register() {
             required
           />
           {error && <div className="text-sm text-red-500">{error}</div>}
-          <button type="submit" className="btn" disabled={loading}>
+          <button type="submit" className="btn w-full" disabled={loading}>
             {loading ? 'Rejestruję…' : 'Zarejestruj'}
           </button>
+          <div className="flex justify-center">
+            <Link to="/login" className="btn-ghost">Masz konto? Zaloguj się</Link>
+          </div>
         </form>
-        <div className="mt-3 text-center">
-          <Link to="/login" className="btn-ghost">Masz konto? Zaloguj się</Link>
-        </div>
       </div>
     </div>
   );

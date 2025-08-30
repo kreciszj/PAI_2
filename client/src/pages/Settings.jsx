@@ -4,12 +4,18 @@ import { apiFetch } from '../lib/api.js';
 
 function Sidebar({ tabs, active, onSelect }) {
   return (
-    <nav className="card p-0">
+    <nav className="card p-0 overflow-hidden">
       {tabs.map(t => (
         <button
           key={t.key}
           onClick={() => onSelect(t.key)}
-          className={`w-full text-left px-4 py-3 border-b last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800 ${active===t.key?'bg-neutral-100 dark:bg-neutral-800 font-medium':''}`}
+          className={
+            `w-full text-left px-4 py-3 border-b last:border-0 transition
+             hover:bg-neutral-50 dark:hover:bg-neutral-800
+             ${active===t.key
+               ? 'bg-neutral-100 dark:bg-neutral-800 font-semibold'
+               : ''}`
+          }
         >
           {t.label}
         </button>
@@ -182,9 +188,18 @@ export default function Settings() {
   }
 
   return (
-    <div className="container-page max-w-4xl">
-      <h1 className="text-2xl font-semibold mb-4">Ustawienia</h1>
-      <div className="grid gap-4 md:grid-cols-[240px_1fr] items-start">
+    <div className="container-page max-w-5xl grid gap-4">
+      {/* Hero */}
+      <div className="card p-6">
+        <h1 className="text-3xl font-extrabold">
+          <span className="title-gradient">Ustawienia</span>
+        </h1>
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+          Profil, bezpieczeństwo i administracja.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-[260px_1fr] items-start">
         <Sidebar tabs={tabs} active={active} onSelect={setActive} />
         <div className="grid gap-4">
           {active === 'profile' && (
@@ -312,7 +327,7 @@ export default function Settings() {
                                 <button
                                   onClick={() => deleteUserAdmin(u)}
                                   disabled={busyUserIds.includes(u.id)}
-                                  className="btn bg-red-600 hover:bg-red-500 disabled:opacity-60"
+                                  className="btn btn-danger disabled:opacity-60"
                                 >
                                   {busyUserIds.includes(u.id) ? 'Usuwanie…' : 'Usuń'}
                                 </button>

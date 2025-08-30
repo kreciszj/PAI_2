@@ -1,28 +1,75 @@
+/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Base tweaks */
+@layer base {
+  html, body { @apply bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 antialiased; }
+  /* Subtle grid background */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(24rem 24rem at 10% 10%, rgba(99,102,241,.06), transparent 50%),
+      radial-gradient(28rem 28rem at 90% 20%, rgba(16,185,129,.06), transparent 50%),
+      radial-gradient(26rem 26rem at 20% 90%, rgba(14,165,233,.06), transparent 50%);
+    pointer-events: none; z-index: -1;
+  }
+  /* Scrollbar */
+  * { scrollbar-width: thin; scrollbar-color: rgb(148 163 184) transparent; }
+  *::-webkit-scrollbar { height: 10px; width: 10px; }
+  *::-webkit-scrollbar-thumb { background: rgba(148,163,184,.5); border-radius: 999px; }
+}
+
+/* Design system */
 @layer components {
   .container-page { @apply mx-auto max-w-7xl px-4 py-6; }
 
-  .card { @apply rounded-xl border border-neutral-200/60 dark:border-neutral-800
-                   bg-white dark:bg-neutral-900 p-5 shadow-sm; }
+  .card { @apply rounded-2xl border border-neutral-200/60 dark:border-neutral-800/80
+                   bg-white/80 dark:bg-neutral-900/80 backdrop-blur p-5 shadow-sm
+                   transition-shadow hover:shadow-md; }
 
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg
-                 border border-transparent bg-indigo-600 text-white px-4 py-2
-                 text-sm font-medium hover:bg-indigo-500 transition; }
+  .card-muted { @apply rounded-2xl border border-neutral-200/60 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 p-4; }
 
-  .btn-ghost { @apply inline-flex items-center rounded-lg px-3 py-2
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl
+                 border border-transparent bg-indigo-600 text-white px-4 py-2.5
+                 text-sm font-semibold tracking-wide shadow-sm
+                 hover:bg-indigo-500 active:scale-[.99] transition; }
+
+  .btn-secondary { @apply bg-sky-600 hover:bg-sky-500 text-white; }
+  .btn-success { @apply bg-emerald-600 hover:bg-emerald-500 text-white; }
+  .btn-danger { @apply bg-red-600 hover:bg-red-500 text-white; }
+
+  .btn-ghost { @apply inline-flex items-center rounded-xl px-3 py-2
                         text-sm font-medium text-neutral-600 hover:bg-neutral-100
                         dark:text-neutral-300 dark:hover:bg-neutral-800; }
 
-  .input { @apply w-full rounded-lg border border-neutral-300 dark:border-neutral-700
-                   bg-white dark:bg-neutral-900 px-3 py-2 text-sm
+  .input { @apply w-full rounded-xl border border-neutral-300 dark:border-neutral-700
+                   bg-white/80 dark:bg-neutral-900/80 backdrop-blur px-3 py-2.5 text-sm
                    text-neutral-900 dark:text-neutral-100 placeholder-neutral-400
                    focus:outline-none focus:ring-2 focus:ring-indigo-500; }
 
-  .navlink { @apply px-3 py-2 rounded-md text-sm font-medium
+  .navlink { @apply px-3 py-2 rounded-lg text-sm font-medium
                      text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100
                      dark:text-neutral-300 dark:hover:text-white dark:hover:bg-neutral-800; }
   .navlink-active { @apply bg-indigo-600 text-white hover:bg-indigo-600; }
+
+  .title-gradient { @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-emerald-600 to-sky-600; }
+
+  .chip { @apply inline-flex items-center gap-1 rounded-full border border-neutral-200 dark:border-neutral-800 px-2 py-1 text-xs text-neutral-700 dark:text-neutral-200 bg-neutral-50 dark:bg-neutral-900; }
+
+  .tabs { @apply flex gap-2 p-1 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700; }
+  .tab { @apply px-4 py-2 rounded-lg text-sm font-semibold text-neutral-600 dark:text-neutral-300 hover:bg-white hover:shadow dark:hover:bg-neutral-900 transition; }
+  .tab-active { @apply bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow; }
+
+  .skeleton { @apply animate-pulse rounded-lg bg-neutral-200/70 dark:bg-neutral-800; }
+}
+
+/* Utilities */
+@layer utilities {
+  .fade-in { animation: fade-in .35s ease both; }
+  .slide-up { animation: slide-up .35s cubic-bezier(.21,1,.21,1) both; }
+  @keyframes fade-in { from { opacity:0 } to { opacity:1 } }
+  @keyframes slide-up { from { transform: translateY(6px); opacity:.6 } to { transform:none; opacity:1 } }
 }

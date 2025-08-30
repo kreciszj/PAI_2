@@ -1,85 +1,98 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '../lib/api';
 import { Link } from 'react-router-dom';
 
+const API = import.meta.env.VITE_API_URL;
 const PLACEHOLDER = `data:image/svg+xml;utf8,` +
-  encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='300' height='450'>
+  encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='240' height='360'>
   <rect width='100%' height='100%' fill='#e5e7eb'/>
-  <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='64' fill='#9ca3af'>?</text>
+  <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='48' fill='#9ca3af'>?</text>
 </svg>`);
 
-const API = import.meta.env.VITE_API_URL;
+const toAbs = (u) => (!u ? u : u.startsWith('/uploads/') ? `${API}${u}` : u);
 
-function toAbs(u) {
-  if (!u) return u;
-  return u.startsWith('/uploads/') ? `${API}${u}` : u;
-}
-
-function Cover({ src, alt, size = 'sm' }) {
+function Cover({ src, alt }) {
   const [s, setS] = useState(toAbs(src) || PLACEHOLDER);
-  const w = size === 'sm' ? 96 : 300;
-  const h = size === 'sm' ? 144 : 450;
   return (
     <img
       src={s || PLACEHOLDER}
       alt={alt}
-      width={w}
-      height={h}
-      style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #ddd', background: '#f3f4f6' }}
-      onError={(e) => { if (s !== PLACEHOLDER) { setS(PLACEHOLDER); e.currentTarget.onerror = null; } }}
+      className="w-full aspect-[2/3] object-cover rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900"
+      onError={(e)=>{ if(s!==PLACEHOLDER){ e.currentTarget.onerror=null; setS(PLACEHOLDER);} }}
     />
   );
 }
 
 export default function Home() {
-  const { accessToken, refreshToken, setTokens, clear } = useAuth();
-  const [me, setMe] = useState(null);
-  const [movies, setMovies] = useState([]);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      if (!accessToken) { setMe(null); return; }
-      const res = await apiFetch('/api/auth/me', { accessToken, refreshToken, setTokens });
-      if (res.ok) setMe(await res.json());
-    })();
-  }, [accessToken, refreshToken, setTokens]);
-
-  useEffect(() => {
-    (async () => {
-      const r = await apiFetch('/api/movies');
-      if (!r.ok) return;
-      const data = await r.json();
-      data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setMovies(data.slice(0, 24));
+      setLoading(true);
+      const r = await apiFetch('/api/movies?page=1');
+      if (r.ok) {
+        const data = await r.json();
+        setRows((data.items || []).slice(0, 15));
+      }
+      setLoading(false);
     })();
   }, []);
 
   return (
-    <div style={{ margin: 24 }}>
-      <h1>Home</h1>
+    <div className="grid gap-6">
+      {/* Hero */}
+      <section className="card p-6">
+        <h1 className="text-4xl font-extrabold">
+          <span className="title-gradient">CineBase</span>
+        </h1>
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+          Twoja encyklopedia filmów + społeczność blogowa.
+        </p>
+        <div className="mt-4 flex gap-2">
+          <Link to="/top" className="btn">Ranking</Link>
+          <Link to="/blogs" className="btn btn-secondary">Społeczność</Link>
+        </div>
+      </section>
 
-      {accessToken ? (
-        <>
-          <pre>{JSON.stringify(me, null, 2)}</pre>
-          <button onClick={clear}>Wyloguj</button>
-        </>
-      ) : (
-        <div style={{ marginBottom: 16 }}>Nie zalogowano</div>
-      )}
+      {/* Ostatnio dodane */}
+      <section className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Ostatnio dodane filmy</h2>
+          <Link to="/" className="btn-ghost">Zobacz wszystkie</Link>
+        </div>
 
-      <h2 style={{ marginTop: 24, marginBottom: 12 }}>Ostatnio dodane filmy</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
-        {movies.map((m) => (
-          <Link key={m.id} to={`/movies/${m.id}`} className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <Cover src={m.coverUrl} alt={m.title} size="sm" />
-            <div style={{ fontSize: 12, marginTop: 6 }}>
-              <div style={{ fontWeight: 600 }}>{m.title}</div>
-              <div style={{ color: '#6b7280' }}>{m.year ?? '—'}</div>
-            </div>
-          </Link>
-        ))}
-      </div>
+        {loading ? (
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+            {Array.from({length:10}).map((_,i)=>(
+              <div key={i} className="card p-0 overflow-hidden">
+                <div className="skeleton aspect-[2/3]"></div>
+                <div className="p-3 space-y-2">
+                  <div className="skeleton h-4 w-2/3"></div>
+                  <div className="skeleton h-3 w-1/3"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+            {rows.map(m => (
+              <Link key={m.id} to={`/movies/${m.id}`} className="card p-0 overflow-hidden group">
+                <div className="relative">
+                  <Cover src={m.coverUrl} alt={m.title} />
+                  <div className="absolute inset-x-0 bottom-0 p-3 pt-10 bg-gradient-to-t from-black/70 via-black/20 to-transparent text-white opacity-0 group-hover:opacity-100 transition">
+                    {m.description ? <p className="text-xs line-clamp-3">{m.description}</p> : null}
+                  </div>
+                </div>
+                <div className="p-3">
+                  <h3 className="text-sm font-semibold line-clamp-2">{m.title}</h3>
+                  <div className="text-xs text-neutral-500">{m.year ?? '—'}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

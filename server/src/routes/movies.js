@@ -1,3 +1,4 @@
+// routes/movies.js (lub odpowiednia ścieżka pliku z routerem filmów)
 import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { fn, col } from 'sequelize';
@@ -6,7 +7,6 @@ import fs from 'fs';
 import multer from 'multer';
 import { Movie, Rating, Comment, User, PostMovie } from '../models/index.js';
 import { requireAuth } from '../middleware/requireAuth.js';
-
 
 const router = Router();
 
@@ -33,7 +33,6 @@ const upload = multer({
   }
 });
 
-
 // GET /api/movies
 router.get('/', async (req, res) => {
   const pageQuery = req.query.page;
@@ -41,7 +40,7 @@ router.get('/', async (req, res) => {
 
   if (pageQuery) {
     page = parseInt(pageQuery, 10) || 1;
-    const limit = 9;
+    const limit = 10; // ⬅️ zmiana: 10 na stronę
     const offset = (page - 1) * limit;
 
     const result = await Movie.findAndCountAll({
@@ -76,7 +75,6 @@ router.get('/', async (req, res) => {
   });
 });
 
-
 // GET /api/movies/top
 router.get('/top', async (req, res) => {
   try {
@@ -86,7 +84,7 @@ router.get('/top', async (req, res) => {
 
     const items = await Promise.all(movies.map(async m => {
       const avgRow = await Rating.findOne({
-        where: {movie_id: m.id},
+        where: { movie_id: m.id },
         attributes: [[fn('avg', col('value')), 'avg']],
         raw: true,
       });
@@ -102,20 +100,16 @@ router.get('/top', async (req, res) => {
         averageRating,
       };
     }));
+
     items.sort((a, b) => b.averageRating - a.averageRating);
     const totalItems = items.length;
     const totalPages = Math.ceil(totalItems / limit);
     const paginatedItems = items.slice((page - 1) * limit, page * limit);
 
-    res.json({
-      page,
-      totalPages,
-      totalItems,
-      items: paginatedItems,
-    });
+    res.json({ page, totalPages, totalItems, items: paginatedItems });
   } catch (e) {
     console.error('GET /api/movies/top error', e);
-    res.status(500).json({error: 'internal'});
+    res.status(500).json({ error: 'internal' });
   }
 });
 
@@ -168,6 +162,7 @@ router.post('/', requireAuth, async (req, res) => {
   try {
     const { title, year, director, description, coverUrl } = req.body || {};
     if (!title) return res.status(400).json({ error: 'title_required' });
+
     const movie = await Movie.create({
       id: uuid(),
       title: String(title).trim(),
@@ -176,6 +171,7 @@ router.post('/', requireAuth, async (req, res) => {
       description: description ?? null,
       cover_url: coverUrl ?? null,
     });
+
     res.status(201).json({
       id: movie.id,
       title: movie.title,
@@ -196,8 +192,8 @@ router.put('/:id', requireAuth, async (req, res) => {
   try {
     const movie = await Movie.findByPk(req.params.id);
     if (!movie) return res.status(404).json({ error: 'not_found' });
-    const { title, year, director, description, coverUrl } = req.body || {};
 
+    const { title, year, director, description, coverUrl } = req.body || {};
     if (typeof title === 'string') movie.title = title.trim();
     if (typeof year !== 'undefined') movie.year = year;
     if (typeof director !== 'undefined') movie.director = director;
@@ -206,8 +202,12 @@ router.put('/:id', requireAuth, async (req, res) => {
 
     await movie.save();
     res.json({
-      id: movie.id, title: movie.title, year: movie.year, director: movie.director,
-      description: movie.description, coverUrl: movie.cover_url,
+      id: movie.id,
+      title: movie.title,
+      year: movie.year,
+      director: movie.director,
+      description: movie.description,
+      coverUrl: movie.cover_url,
     });
   } catch (e) {
     console.error('PUT /api/movies/:id error', e);
@@ -227,7 +227,6 @@ router.delete('/:id', requireAuth, async (req, res) => {
     await Comment.destroy({ where: { movie_id: id } });
     await PostMovie.destroy({ where: { movie_id: id } });
 
-    // remove file if stored locally
     if (movie.cover_url && movie.cover_url.startsWith('/uploads/covers/')) {
       const abs = path.join(uploadRoot, 'covers', path.basename(movie.cover_url));
       fs.promises.unlink(abs).catch(() => {});
@@ -266,7 +265,7 @@ router.post('/:id/cover', requireAuth, (req, res, next) => {
   }
 });
 
-// ===== Komentarze i oceny (bez zmian merytorycznych) =====
+// ===== Komentarze i oceny =====
 
 // POST /api/movies/:id/rating
 router.post('/:id/rating', requireAuth, async (req, res) => {
@@ -333,18 +332,22 @@ router.post('/:id/comments', requireAuth, async (req, res) => {
     if (!body || typeof body !== 'string' || !body.trim()) {
       return res.status(400).json({ error: 'comment_required' });
     }
+
     const movie = await Movie.findByPk(id);
     if (!movie) return res.status(404).json({ error: 'not_found' });
 
     const comment = await Comment.create({
-      id: uuid(), user_id: req.user.sub, movie_id: id, body: body.trim(),
+      id: uuid(),
+      user_id: req.user.sub,
+      movie_id: id,
+      body: body.trim(),
     });
 
     const withUser = await Comment.findByPk(comment.id, {
       include: [{ model: User, attributes: ['id', 'username'] }],
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       id: withUser.id,
       body: withUser.body,
       author: withUser.User ? { id: withUser.User.id, username: withUser.User.username } : null,
@@ -352,11 +355,12 @@ router.post('/:id/comments', requireAuth, async (req, res) => {
     });
   } catch (e) {
     console.error('POST /api/movies/:id/comments error', e);
-    res.status(500).json({ error: 'internal' });
+    return res.status(500).json({ error: 'internal' });
   }
 });
 
-// Update movie comment
+
+// PUT /api/movies/:movieId/comments/:commentId
 router.put('/:movieId/comments/:commentId', requireAuth, async (req, res) => {
   try {
     const { movieId, commentId } = req.params;
@@ -376,14 +380,19 @@ router.put('/:movieId/comments/:commentId', requireAuth, async (req, res) => {
     comment.body = body.trim();
     await comment.save();
 
-    return res.json({ id: comment.id, body: comment.body, author: comment.User ? { id: comment.User.id, username: comment.User.username } : null, createdAt: comment.created_at ?? comment.createdAt });
+    return res.json({
+      id: comment.id,
+      body: comment.body,
+      author: comment.User ? { id: comment.User.id, username: comment.User.username } : null,
+      createdAt: comment.created_at ?? comment.createdAt
+    });
   } catch (e) {
     console.error('PUT /api/movies/:movieId/comments/:commentId error', e);
     res.status(500).json({ error: 'internal' });
   }
 });
 
-// Delete movie comment
+// DELETE /api/movies/:movieId/comments/:commentId
 router.delete('/:movieId/comments/:commentId', requireAuth, async (req, res) => {
   try {
     const { movieId, commentId } = req.params;
