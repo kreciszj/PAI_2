@@ -36,21 +36,36 @@ const upload = multer({
 
 // GET /api/movies
 router.get('/', async (req, res) => {
-  const page = parseInt(req.query.page, 10) || 1
-  const limit = 10;
-  const offset = (page - 1) * limit;
+  const pageQuery = req.query.page;
+  let items, count, totalPages, page;
 
-  const {count, rows} = await Movie.findAndCountAll({
-    order: [['year', 'DESC']],
-    limit,
-    offset
-  });
+  if (pageQuery) {
+    page = parseInt(pageQuery, 10) || 1;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    const result = await Movie.findAndCountAll({
+      order: [['year', 'DESC']],
+      limit,
+      offset,
+    });
+
+    count = result.count;
+    items = result.rows;
+    totalPages = Math.ceil(count / limit);
+  } else {
+    // brak page → zwracamy wszystkie
+    items = await Movie.findAll({ order: [['year', 'DESC']] });
+    count = items.length;
+    page = 1;
+    totalPages = 1;
+  }
 
   res.json({
     page,
-    totalPages: Math.ceil(count / limit),
+    totalPages,
     totalItems: count,
-    items: rows.map(m => ({
+    items: items.map(m => ({
       id: m.id,
       title: m.title,
       year: m.year,
@@ -60,6 +75,7 @@ router.get('/', async (req, res) => {
     })),
   });
 });
+
 
 // GET /api/movies/top
 router.get('/top', async (req, res) => {
