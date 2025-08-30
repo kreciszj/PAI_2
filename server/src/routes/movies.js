@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
 
   if (pageQuery) {
     page = parseInt(pageQuery, 10) || 1;
-    const limit = 10;
+    const limit = 9;
     const offset = (page - 1) * limit;
 
     const result = await Movie.findAndCountAll({
