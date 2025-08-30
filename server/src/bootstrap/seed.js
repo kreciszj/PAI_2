@@ -42,34 +42,6 @@ export async function seed() {
           console.log('[seed] imported movies from JSON');
         }
       }
-
-      if (moviesToAdd.length === 0) {
-        moviesToAdd = [
-          {
-            id: uuid(),
-            title: 'Inception',
-            year: 2010,
-            director: 'Christopher Nolan',
-            description: 'Sci-fi heist.'
-          },
-          {
-            id: uuid(),
-            title: 'The Matrix',
-            year: 1999,
-            director: 'Lana & Lilly Wachowski',
-            description: 'Reality bend.'
-          },
-          {
-            id: uuid(),
-            title: 'Interstellar',
-            year: 2014,
-            director: 'Christopher Nolan',
-            description: 'Space & time.'
-          },
-        ];
-        console.log('[seed] inserted default sample movies');
-      }
-
       await Movie.bulkCreate(moviesToAdd);
     }
   }

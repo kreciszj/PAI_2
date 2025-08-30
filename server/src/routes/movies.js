@@ -324,6 +324,42 @@ router.get('/:id/comments', async (req, res) => {
   }
 });
 
+// POST /api/movies/:id/comments
+router.post('/:id/comments', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { body } = req.body || {};
+    if (!body || typeof body !== 'string' || !body.trim()) {
+      return res.status(400).json({ error: 'comment_required' });
+    }
+
+    const movie = await Movie.findByPk(id);
+    if (!movie) return res.status(404).json({ error: 'not_found' });
+
+    const comment = await Comment.create({
+      id: uuid(),
+      user_id: req.user.sub,
+      movie_id: id,
+      body: body.trim(),
+    });
+
+    const withUser = await Comment.findByPk(comment.id, {
+      include: [{ model: User, attributes: ['id', 'username'] }],
+    });
+
+    return res.status(201).json({
+      id: withUser.id,
+      body: withUser.body,
+      author: withUser.User ? { id: withUser.User.id, username: withUser.User.username } : null,
+      createdAt: withUser.created_at ?? withUser.createdAt,
+    });
+  } catch (e) {
+    console.error('POST /api/movies/:id/comments error', e);
+    return res.status(500).json({ error: 'internal' });
+  }
+});
+
+
 // PUT /api/movies/:movieId/comments/:commentId
 router.put('/:movieId/comments/:commentId', requireAuth, async (req, res) => {
   try {

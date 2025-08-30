@@ -6,6 +6,7 @@ const isProd = env === 'production';
 export const config = {
   port: process.env.PORT || 3000,
   corsOrigin: process.env.CORS_ORIGIN || '*',
+  resetDbOnBoot: (process.env.DB_RESET_ON_BOOT || 'false') === 'true',
   dbPath: process.env.DB_PATH || './data/app.sqlite',
   jwt: {
     accessTtlSec: Number(process.env.JWT_ACCESS_TTL || 900),

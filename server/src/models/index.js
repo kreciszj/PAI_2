@@ -109,5 +109,8 @@ Movie.belongsToMany(Post, { through: PostMovie, as: 'posts', foreignKey: 'movie_
 
 // ===== INIT + SEED =====
 export async function initDb() {
+  if (config.resetDbOnBoot) {
+    await sequelize.drop();
+  }
   await sequelize.sync({ alter: true });
 }
