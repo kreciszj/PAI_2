@@ -10,11 +10,7 @@ const PLACEHOLDER = `data:image/svg+xml;utf8,` +
 </svg>`);
 
 const API = import.meta.env.VITE_API_URL;
-
-function toAbs(u) {
-  if (!u) return u;
-  return u.startsWith('/uploads/') ? `${API}${u}` : u;
-}
+const toAbs = (u) => (!u ? u : u.startsWith('/uploads/') ? `${API}${u}` : u);
 
 function Cover({ src, alt }) {
   const [s, setS] = useState(toAbs(src) || PLACEHOLDER);
@@ -24,9 +20,38 @@ function Cover({ src, alt }) {
       alt={alt}
       width={300}
       height={450}
-      style={{ objectFit:'cover', borderRadius:8, border:'1px solid #ddd', background:'#f3f4f6' }}
+      className="w-[300px] h-[450px] object-cover rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900"
       onError={(e) => { if (s !== PLACEHOLDER) { setS(PLACEHOLDER); e.currentTarget.onerror = null; } }}
     />
+  );
+}
+
+function Stars({ value = 0 }) {
+  const v = Math.max(0, Math.min(10, value));
+  return (
+    <span className="text-yellow-500/90 text-xl leading-none select-none">
+      {'★'.repeat(Math.round(v))}{'✩'.repeat(10 - Math.round(v))}
+    </span>
+  );
+}
+
+function StarsInput({ value, onChange, disabled }) {
+  return (
+    <div className={`flex gap-1 text-2xl ${disabled ? 'opacity-60' : ''}`}>
+      {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => !disabled && onChange(n)}
+          className={`leading-none transition ${n <= value ? 'text-yellow-500' : 'text-neutral-300 dark:text-neutral-700'} hover:scale-105`}
+          aria-label={`Oceń na ${n}/10`}
+          disabled={disabled}
+          title={`${n}/10`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -38,9 +63,9 @@ export default function MovieDetails() {
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [rating, setRating] = useState(10);
+  const [myRating, setMyRating] = useState(10);
   const [submittingRating, setSubmittingRating] = useState(false);
-  const [ratingError, setRatingError] = useState(null);
+  const [ratingMsg, setRatingMsg] = useState(null);
 
   const [comment, setComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -74,21 +99,46 @@ export default function MovieDetails() {
     })();
   }, [accessToken, refreshToken, setTokens]);
 
-  async function submitRating(e) {
-    e.preventDefault();
-    setRatingError(null);
+  async function submitRating() {
+    if (!accessToken) { setRatingMsg('Zaloguj się, aby oceniać.'); return; }
+    setRatingMsg(null);
     setSubmittingRating(true);
     try {
       const r = await apiFetch(`/api/movies/${id}/rating`, {
         method: 'POST',
-        body: { value: Number(rating) },
+        body: { value: Number(myRating) },
         accessToken, refreshToken, setTokens,
       });
       if (!r.ok) {
-        setRatingError('Nie udało się zapisać oceny');
+        setRatingMsg('Nie udało się zapisać oceny');
       } else {
         const { averageRating } = await r.json();
-        setData(d => d ? { ...d, averageRating } : d); // optymistyczny update
+        setData(d => d ? { ...d, averageRating } : d);
+        setRatingMsg('Zapisano Twoją ocenę!');
+        setTimeout(() => setRatingMsg(null), 2000);
+      }
+    } finally {
+      setSubmittingRating(false);
+    }
+  }
+
+  async function clearRating() {
+    if (!accessToken) return;
+    setSubmittingRating(true);
+    setRatingMsg(null);
+    try {
+      const r = await apiFetch(`/api/movies/${id}/rating`, {
+        method: 'DELETE',
+        accessToken, refreshToken, setTokens,
+      });
+      if (!r.ok) {
+        setRatingMsg('Nie udało się usunąć oceny');
+      } else {
+        const d = await r.json().catch(() => ({}));
+        if (typeof d.averageRating !== 'undefined') {
+          setData(prev => prev ? { ...prev, averageRating: d.averageRating } : prev);
+        }
+        setRatingMsg('Usunięto Twoją ocenę.');
       }
     } finally {
       setSubmittingRating(false);
@@ -111,7 +161,7 @@ export default function MovieDetails() {
         setCommentError('Nie udało się dodać komentarza');
       } else {
         const created = await r.json();
-        setData(d => d ? { ...d, comments: [created, ...(d.comments ?? [])] } : d); // bez GET
+        setData(d => d ? { ...d, comments: [created, ...(d.comments ?? [])] } : d);
         setComment('');
       }
     } finally {
@@ -130,11 +180,7 @@ export default function MovieDetails() {
     setEditingId(c.id);
     setEditBody(c.body || '');
   }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditBody('');
-  }
+  function cancelEdit() { setEditingId(null); setEditBody(''); }
 
   async function saveEdit(commentId) {
     if (!editingId || editingId !== commentId) return;
@@ -183,63 +229,80 @@ export default function MovieDetails() {
     }
   }
 
-  if (loading) return <div className="text-center text-sm opacity-70">Loading…</div>;
-  if (!data) return <div className="text-red-500">Not found</div>;
+  if (loading) return <div className="text-center text-sm opacity-70">Ładowanie…</div>;
+  if (!data) return <div className="text-red-500">Nie znaleziono</div>;
 
   return (
     <div className="grid gap-6">
-      <header className="grid gap-1">
-        <h1 className="text-2xl font-semibold">
-          {data.title} {data.year ? <span className="text-neutral-500">({data.year})</span> : null}
+      {/* Nagłówek */}
+      <header className="card p-6">
+        <h1 className="text-3xl font-extrabold">
+          <span className="title-gradient">{data.title}</span>
+          {data.year ? <span className="text-neutral-500"> ({data.year})</span> : null}
         </h1>
-        {data.director && <div className="text-sm text-neutral-600 dark:text-neutral-400">Director: {data.director}</div>}
+        {data.director && (
+          <div className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+            Reżyser: <span className="chip">{data.director}</span>
+          </div>
+        )}
       </header>
 
+      {/* Główna sekcja */}
       <section className="grid gap-4 md:grid-cols-[300px_1fr] items-start">
-        <div><Cover src={data.coverUrl} alt={data.title} /></div>
-        <div className="card">
-          <h2 className="text-lg font-semibold mb-2">Description</h2>
-          <p className="text-sm text-neutral-700 dark:text-neutral-300">{data.description || '—'}</p>
+        <div className="card p-3">
+          <Cover src={data.coverUrl} alt={data.title} />
+        </div>
+
+        <div className="grid gap-4">
+          <div className="card">
+            <h2 className="text-lg font-semibold mb-2">Opis</h2>
+            <p className="text-sm text-neutral-700 dark:text-neutral-300">{data.description || '—'}</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="card">
+              <h2 className="text-lg font-semibold mb-2">Średnia ocena</h2>
+              <div className="flex items-end gap-3">
+                <div className="text-3xl font-extrabold">{typeof data.averageRating === 'number' ? data.averageRating.toFixed(1) : '—'}</div>
+                <Stars value={data.averageRating ?? 0} />
+              </div>
+            </div>
+
+            <div className="card">
+              <h2 className="text-lg font-semibold mb-3">Twoja ocena</h2>
+              <div className="flex items-center justify-between gap-3">
+                <StarsInput value={myRating} onChange={setMyRating} disabled={!accessToken || submittingRating} />
+                <div className="flex gap-2">
+                  <button onClick={submitRating} disabled={!accessToken || submittingRating} className="btn">
+                    {submittingRating ? 'Zapisywanie…' : 'Zapisz'}
+                  </button>
+                  <button onClick={clearRating} disabled={!accessToken || submittingRating} className="btn-ghost border border-neutral-200 dark:border-neutral-800 rounded-xl">
+                    Wyczyść
+                  </button>
+                </div>
+              </div>
+              {ratingMsg && <div className="text-sm mt-2 text-neutral-600 dark:text-neutral-400">{ratingMsg}</div>}
+              {!accessToken && <div className="text-sm mt-2 text-neutral-500">Zaloguj się, aby oceniać.</div>}
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="grid gap-3 md:grid-cols-2">
-        <div className="card">
-          <h2 className="text-lg font-semibold mb-3">Average rating</h2>
-          <div className="text-3xl font-bold">{data.averageRating ?? '—'}</div>
-          {ratingError && <div className="text-sm text-red-500 mt-2">{ratingError}</div>}
-        </div>
-
-        <form onSubmit={submitRating} className="card grid gap-3">
-          <h2 className="text-lg font-semibold">Your rating</h2>
-          <select
-            className="input w-40"
-            value={rating}
-            onChange={e => setRating(Number(e.target.value))}
-            disabled={!accessToken || submittingRating}
-          >
-            {Array.from({ length: 10 }, (_, i) => i + 1).map(v => (<option key={v} value={v}>{v}</option>))}
-          </select>
-          <button className="btn w-40" disabled={!accessToken || submittingRating}>
-            {submittingRating ? 'Submitting…' : 'Submit rating'}
-          </button>
-        </form>
-      </section>
-
+      {/* Komentarze */}
       <section className="grid gap-3">
-        <h2 className="text-lg font-semibold">Comments</h2>
+        <h2 className="text-lg font-semibold">Komentarze</h2>
 
         <form onSubmit={submitComment} className="card grid gap-3">
           <textarea
             className="input min-h-[90px]"
-            placeholder={accessToken ? 'Write a comment…' : 'Zaloguj się, aby dodać komentarz'}
+            placeholder={accessToken ? 'Napisz komentarz…' : 'Zaloguj się, aby dodać komentarz'}
             value={comment}
             onChange={e => setComment(e.target.value)}
             disabled={!accessToken || submittingComment}
           />
           <div className="flex gap-2">
             <button className="btn" disabled={!accessToken || submittingComment}>
-              {submittingComment ? 'Posting…' : 'Post comment'}
+              {submittingComment ? 'Wysyłanie…' : 'Dodaj komentarz'}
             </button>
             {commentError && <span className="text-sm text-red-500">{commentError}</span>}
           </div>
@@ -249,7 +312,7 @@ export default function MovieDetails() {
           {data.comments?.length ? data.comments.map(c => (
             <article key={c.id} className="card">
               <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="flex-1">
                   <div className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">
                     {c.author ? `@${c.author.username}` : '—'} • {c.createdAt ? new Date(c.createdAt).toLocaleString() : '—'}
                   </div>
@@ -263,9 +326,9 @@ export default function MovieDetails() {
                       />
                       <div className="flex gap-2">
                         <button className="btn" disabled={saving} onClick={() => saveEdit(c.id)}>
-                          {saving ? 'Saving…' : 'Save'}
+                          {saving ? 'Zapisywanie…' : 'Zapisz'}
                         </button>
-                        <button className="btn-ghost" onClick={cancelEdit}>Cancel</button>
+                        <button className="btn-ghost" onClick={cancelEdit}>Anuluj</button>
                       </div>
                     </div>
                   ) : (
@@ -274,19 +337,19 @@ export default function MovieDetails() {
                 </div>
                 {canModify(c) && editingId !== c.id && (
                   <div className="flex gap-2">
-                    <button className="btn" onClick={() => startEdit(c)}>Edit</button>
+                    <button className="btn" onClick={() => startEdit(c)}>Edytuj</button>
                     <button
-                      className="btn bg-red-600 hover:bg-red-500"
+                      className="btn btn-danger"
                       disabled={deletingId === c.id}
                       onClick={() => deleteComment(c.id)}
                     >
-                      {deletingId === c.id ? 'Deleting…' : 'Delete'}
+                      {deletingId === c.id ? 'Usuwanie…' : 'Usuń'}
                     </button>
                   </div>
                 )}
               </div>
             </article>
-          )) : <div className="text-sm opacity-70">No comments yet.</div>}
+          )) : <div className="text-sm opacity-70">Brak komentarzy.</div>}
         </div>
       </section>
     </div>
