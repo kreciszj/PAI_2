@@ -6,6 +6,7 @@ import { seed } from './bootstrap/seed.js';
 import authRouter from './routes/auth.js';
 import moviesRouter from './routes/movies.js';
 import postsRouter from './routes/posts.js';
+import usersRouter from './routes/users.js';
 
 const app = express();
 app.use(cors({ origin: config.corsOrigin, credentials: false }));
@@ -16,6 +17,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRouter);
 app.use('/api/movies', moviesRouter);
 app.use('/api/posts', postsRouter);
+app.use('/api/users', usersRouter);
 
 await initDb();
 await seed();
