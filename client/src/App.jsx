@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
 import Movies from './pages/Movies';
+import MoviesTop from './pages/MoviesTop';
 import Blogs from './pages/Blogs';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<Private><Layout /></Private>}>
             <Route index element={<Movies />} />
+            <Route path="top" element={<MoviesTop />} />
             <Route path="blogs" element={<Blogs />} />
             <Route path="blogs/:id" element={<BlogPost />} />
             <Route path="settings" element={<Settings />} />

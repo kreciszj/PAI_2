@@ -35,18 +35,91 @@ const upload = multer({
 
 
 // GET /api/movies
-router.get('/', async (_req, res) => {
-  const rows = await Movie.findAll({ order: [['year', 'DESC']] });
-  res.json(rows.map(m => ({
-    id: m.id,
-    title: m.title,
-    year: m.year,
-    director: m.director ?? null,
-    description: m.description ?? null,
-    coverUrl: m.cover_url ?? null,
-  })));
+router.get('/', async (req, res) => {
+  const pageQuery = req.query.page;
+  let items, count, totalPages, page;
+
+  if (pageQuery) {
+    page = parseInt(pageQuery, 10) || 1;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    const result = await Movie.findAndCountAll({
+      order: [['year', 'DESC']],
+      limit,
+      offset,
+    });
+
+    count = result.count;
+    items = result.rows;
+    totalPages = Math.ceil(count / limit);
+  } else {
+    // brak page → zwracamy wszystkie
+    items = await Movie.findAll({ order: [['year', 'DESC']] });
+    count = items.length;
+    page = 1;
+    totalPages = 1;
+  }
+
+  res.json({
+    page,
+    totalPages,
+    totalItems: count,
+    items: items.map(m => ({
+      id: m.id,
+      title: m.title,
+      year: m.year,
+      director: m.director ?? null,
+      description: m.description ?? null,
+      coverUrl: m.cover_url ?? null,
+    })),
+  });
 });
 
+
+// GET /api/movies/top
+router.get('/top', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    const {count, rows} = await Movie.findAndCountAll({
+      limit,
+      offset,
+    });
+
+    const items = await Promise.all(rows.map(async m => {
+      const avgRow = await Rating.findOne({
+        where: {movie_id: m.id},
+        attributes: [[fn('avg', col('value')), 'avg']],
+        raw: true,
+      });
+      const averageRating = avgRow?.avg != null ? Number(parseFloat(avgRow.avg).toFixed(2)) : null;
+
+      return {
+        id: m.id,
+        title: m.title,
+        year: m.year,
+        director: m.director ?? null,
+        description: m.description ?? null,
+        coverUrl: m.cover_url ?? null,
+        averageRating,
+      };
+    }));
+
+    items.sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0));
+
+    res.json({
+      page,
+      totalPages: Math.ceil(count / limit),
+      items,
+    });
+  } catch (e) {
+    console.error('GET /api/movies/top error', e);
+    res.status(500).json({error: 'internal'});
+  }
+});
 
 // GET /api/movies/:id
 router.get('/:id', async (req, res) => {

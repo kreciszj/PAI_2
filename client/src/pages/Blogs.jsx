@@ -40,7 +40,7 @@ export default function Blogs() {
         const res = await apiFetch('/api/movies');
         if (res.ok) {
           const data = await res.json();
-          setMovies(data);
+          setMovies(data.items);
         }
       } catch {}
     })();

@@ -3,7 +3,20 @@ import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '../lib/api';
 import { Link, NavLink } from 'react-router-dom';
 
-export default function Movies() {
+function truncateText(text, maxLength) {
+  if (!text) return '';
+  const sliceLength = Math.max(0, maxLength - 3);
+  return text.length > maxLength ? text.slice(0, sliceLength) + '...' : text;
+}
+
+function renderStars(rating) {
+  const fullStars = Math.floor(rating);
+  const halfStar = rating % 1 >= 0.5 ? 1 : 0;
+  const emptyStars = 10 - fullStars - halfStar;
+  return '★'.repeat(fullStars) + '⯪'.repeat(halfStar) + '✩'.repeat(emptyStars);
+}
+
+export default function MoviesTop() {
   const { accessToken, refreshToken, setTokens } = useAuth();
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(1);
@@ -14,7 +27,7 @@ export default function Movies() {
     (async () => {
       setLoading(true);
       try {
-        const r = await apiFetch(`/api/movies?page=${page}`, {accessToken, refreshToken, setTokens});
+        const r = await apiFetch(`/api/movies/top?page=${page}`, {accessToken, refreshToken, setTokens});
         if (r.ok) {
           const data = await r.json();
           setRows(data.items);
@@ -28,7 +41,7 @@ export default function Movies() {
 
   return (
     <div className="grid gap-4">
-      {/* Nawigacja między zakładkami */}
+      {/* Pasek nawigacyjny taki sam jak w Movies.jsx */}
       <div className="flex gap-3">
         <NavLink
           to="/"
@@ -58,14 +71,28 @@ export default function Movies() {
 
       {loading && <p>Ładowanie...</p>}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {rows.map(m => (
-          <Link key={m.id} to={`/movies/${m.id}`} className="card hover:shadow-md transition">
-            <h2 className="text-lg font-semibold">
-              {m.title} {m.year ? <span className="text-neutral-500">({m.year})</span> : null}
-            </h2>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-              {m.description || 'Brak opisu'}
+      <div className="flex flex-col gap-4">
+        {rows.map((m, index) => (
+          <Link
+            key={m.id}
+            to={`/movies/${m.id}`}
+            className="card hover:shadow-md transition p-4 flex gap-4"
+          >
+            <div className="flex flex-col gap-1 w-1/3">
+              <h2 className="text-lg font-semibold">
+                {index + 1 + (page - 1) * 10}. {m.title}
+                {m.year && <span className="text-sm text-neutral-500 ml-2">({m.year})</span>}
+              </h2>
+              {m.director && <p className="text-sm text-neutral-500">{m.director}</p>}
+              {m.averageRating != null && (
+                <p className="text-2xl font-bold text-yellow-600">
+                  {m.averageRating}/10 {renderStars(m.averageRating)}
+                </p>
+              )}
+            </div>
+
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 flex-1">
+              {truncateText(m.description, 150)}
             </p>
           </Link>
         ))}
