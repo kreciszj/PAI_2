@@ -146,73 +146,83 @@ export default function Settings() {
     }
   }
 
-  if (!accessToken) return <div style={{ margin: 24 }}>Zaloguj się, aby zarządzać ustawieniami.</div>;
+  if (!accessToken) return (
+    <div className="container-page">
+      <div className="max-w-2xl mx-auto card text-sm">
+        Zaloguj się, aby zarządzać ustawieniami.
+      </div>
+    </div>
+  );
 
   return (
-    <div style={{ maxWidth: 560, margin: '24px auto', padding: 16 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 16 }}>Ustawienia</h1>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <h1 className="text-2xl font-semibold">Ustawienia</h1>
 
-      <section style={{ marginBottom: 24, padding: 16, border: '1px solid #eee', borderRadius: 8 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Zmień nazwę użytkownika</h2>
-        <form onSubmit={submitUsername}>
-          <label style={{ display: 'block', marginBottom: 8 }}>Nazwa użytkownika</label>
-          <input value={username} onChange={(e) => setUsername(e.target.value)}
-                 minLength={3} maxLength={32}
-                 style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 6 }} />
-          <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button disabled={savingUser} type="submit"
-                    style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #999' }}>
-              {savingUser ? 'Zapisywanie…' : 'Zapisz' }
+      <section className="card">
+        <h2 className="text-lg font-semibold mb-3">Zmień nazwę użytkownika</h2>
+        <form onSubmit={submitUsername} className="grid gap-3">
+          <div>
+            <label className="block mb-2 text-sm font-medium">Nazwa użytkownika</label>
+            <input
+              className="input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              minLength={3}
+              maxLength={32}
+            />
+          </div>
+          <div className="mt-1 flex items-center gap-2">
+            <button disabled={savingUser} type="submit" className="btn disabled:opacity-60">
+              {savingUser ? 'Zapisywanie…' : 'Zapisz'}
             </button>
-            {userMsg && <span aria-live="polite">{userMsg}</span>}
+            {userMsg && <span aria-live="polite" className="text-sm">{userMsg}</span>}
           </div>
         </form>
       </section>
 
       {me?.role === 'admin' && (
-        <section style={{ marginTop: 24, padding: 16, border: '1px solid #eee', borderRadius: 8 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 600 }}>Zarządzanie użytkownikami (admin)</h2>
-            <button onClick={loadUsers} disabled={loadingUsers}
-                    style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #999' }}>
+        <section className="card">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Zarządzanie użytkownikami (admin)</h2>
+            <button onClick={loadUsers} disabled={loadingUsers} className="btn-ghost disabled:opacity-60">
               {loadingUsers ? 'Odświeżanie…' : 'Odśwież'}
             </button>
           </div>
-          {usersMsg && <div style={{ marginBottom: 8 }}>{usersMsg}</div>}
+          {usersMsg && <div className="mb-2 text-sm text-red-600">{usersMsg}</div>}
           {loadingUsers && users.length === 0 ? (
-            <div>Ładowanie…</div>
+            <div className="text-sm text-neutral-500">Ładowanie…</div>
           ) : users.length === 0 ? (
-            <div>Brak użytkowników do wyświetlenia.</div>
+            <div className="text-sm text-neutral-500">Brak użytkowników do wyświetlenia.</div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full table-auto">
                 <thead>
                   <tr>
-                    <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Nazwa</th>
-                    <th style={{ textAlign: 'left', padding: 8, borderBottom: '1px solid #eee' }}>Rola</th>
-                    <th style={{ textAlign: 'right', padding: 8, borderBottom: '1px solid #eee' }}>Akcje</th>
+                    <th className="text-left px-3 py-2 border-b border-neutral-200/70 dark:border-neutral-800">Nazwa</th>
+                    <th className="text-left px-3 py-2 border-b border-neutral-200/70 dark:border-neutral-800">Rola</th>
+                    <th className="text-right px-3 py-2 border-b border-neutral-200/70 dark:border-neutral-800">Akcje</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.map(u => (
                     <tr key={u.id}>
-                      <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                      <td className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800/60">
                         <input
+                          className="input"
                           value={u.username}
                           onChange={(e) => setUsers(list => list.map(x => x.id === u.id ? { ...x, username: e.target.value } : x))}
-                          style={{ width: '100%', padding: 6, border: '1px solid #ccc', borderRadius: 6 }}
                         />
                       </td>
-                      <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                      <td className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800/60">
                         {u.id === me?.id ? (
-                          <div title="Nie możesz zmienić własnej roli" style={{ padding: 6 }}>
+                          <div title="Nie możesz zmienić własnej roli" className="px-1.5 py-1.5 text-sm text-neutral-600 dark:text-neutral-300">
                             {u.role}
                           </div>
                         ) : (
                           <select
+                            className="input"
                             value={u.role}
                             onChange={(e) => setUsers(list => list.map(x => x.id === u.id ? { ...x, role: e.target.value } : x))}
-                            style={{ width: '100%', padding: 6, border: '1px solid #ccc', borderRadius: 6 }}
                           >
                             <option value="user">user</option>
                             <option value="moderator">moderator</option>
@@ -220,20 +230,20 @@ export default function Settings() {
                           </select>
                         )}
                       </td>
-                      <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
+                      <td className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800/60">
                         {u.id === me?.id ? (
-                          <div style={{ textAlign: 'right', color: '#666', fontSize: 12 }}>Twoje konto</div>
+                          <div className="text-right text-xs text-neutral-500">Twoje konto</div>
                         ) : (
-                          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                          <div className="flex gap-2 justify-end">
                             <button
                               onClick={() => saveUserAdmin(u)}
                               disabled={busyUserIds.includes(u.id)}
-                              style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #999' }}
+                              className="btn disabled:opacity-60"
                             >{busyUserIds.includes(u.id) ? 'Zapisywanie…' : 'Zapisz'}</button>
                             <button
                               onClick={() => deleteUserAdmin(u)}
                               disabled={busyUserIds.includes(u.id)}
-                              style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #c44', color: '#c00' }}
+                              className="btn bg-red-600 hover:bg-red-500 disabled:opacity-60"
                             >{busyUserIds.includes(u.id) ? 'Usuwanie…' : 'Usuń'}</button>
                           </div>
                         )}
@@ -244,27 +254,37 @@ export default function Settings() {
               </table>
             </div>
           )}
-          <p style={{ marginTop: 8, fontSize: 12, color: '#666' }}>Uwaga: usunięcie użytkownika usuwa także jego wpisy, komentarze i polubienia.</p>
+          <p className="mt-2 text-xs text-neutral-500">Uwaga: usunięcie użytkownika usuwa także jego wpisy, komentarze i polubienia.</p>
         </section>
       )}
 
-      <section style={{ padding: 16, border: '1px solid #eee', borderRadius: 8 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Zmień hasło</h2>
-        <form onSubmit={submitPassword}>
-          <label style={{ display: 'block', marginBottom: 8 }}>Aktualne hasło</label>
-          <input value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
-                 type="password"
-                 style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 6 }} />
-          <label style={{ display: 'block', margin: '12px 0 8px' }}>Nowe hasło</label>
-          <input value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                 type="password" minLength={6}
-                 style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 6 }} />
-          <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button disabled={savingPass} type="submit"
-                    style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #999' }}>
-              {savingPass ? 'Zapisywanie…' : 'Zapisz' }
+      <section className="card">
+        <h2 className="text-lg font-semibold mb-3">Zmień hasło</h2>
+        <form onSubmit={submitPassword} className="grid gap-3">
+          <div>
+            <label className="block mb-2 text-sm font-medium">Aktualne hasło</label>
+            <input
+              className="input"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              type="password"
+            />
+          </div>
+          <div>
+            <label className="block mb-2 text-sm font-medium">Nowe hasło</label>
+            <input
+              className="input"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              type="password"
+              minLength={6}
+            />
+          </div>
+          <div className="mt-1 flex items-center gap-2">
+            <button disabled={savingPass} type="submit" className="btn disabled:opacity-60">
+              {savingPass ? 'Zapisywanie…' : 'Zapisz'}
             </button>
-            {passMsg && <span aria-live="polite">{passMsg}</span>}
+            {passMsg && <span aria-live="polite" className="text-sm">{passMsg}</span>}
           </div>
         </form>
       </section>
