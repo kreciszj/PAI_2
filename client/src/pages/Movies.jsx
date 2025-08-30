@@ -6,17 +6,32 @@ import { Link } from 'react-router-dom';
 export default function Movies() {
     const { accessToken, refreshToken, setTokens } = useAuth();
     const [rows, setRows] = useState([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         (async () => {
-            const r = await apiFetch('/api/movies', { accessToken, refreshToken, setTokens });
-            if (r.ok) setRows(await r.json());
+            setLoading(true);
+            try {
+                const r = await apiFetch(`/api/movies?page=${page}`, {accessToken, refreshToken, setTokens});
+                if (r.ok) {
+                    const data = await r.json();
+                    setRows(data.items);
+                    setTotalPages(data.totalPages);
+                }
+            } finally {
+                setLoading(false);
+            }
         })();
-    }, [accessToken, refreshToken, setTokens]);
+    }, [accessToken, refreshToken, setTokens, page]);
 
     return (
         <div className="grid gap-4">
             <h1 className="text-2xl font-semibold">Baza filmów</h1>
+
+            {loading && <p>Ładowanie...</p>}
+
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {rows.map(m => (
                     <Link key={m.id} to={`/movies/${m.id}`} className="card hover:shadow-md transition">
@@ -28,6 +43,24 @@ export default function Movies() {
                         </p>
                     </Link>
                 ))}
+            </div>
+
+            <div className="flex justify-center gap-2 mt-4 items-center">
+                <button
+                    disabled={page <= 1 || loading}
+                    onClick={() => setPage(page - 1)}
+                    className="px-3 py-1 border rounded disabled:opacity-50"
+                >
+                    Poprzednia
+                </button>
+                <span>{page} / {totalPages}</span>
+                <button
+                    disabled={page >= totalPages || loading}
+                    onClick={() => setPage(page + 1)}
+                    className="px-3 py-1 border rounded disabled:opacity-50"
+                >
+                    Następna
+                </button>
             </div>
         </div>
     );

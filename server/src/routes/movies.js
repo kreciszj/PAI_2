@@ -7,15 +7,29 @@ import { requireAuth } from '../middleware/requireAuth.js';
 const router = Router();
 
 // GET /api/movies
-router.get('/', async (_req, res) => {
-  const rows = await Movie.findAll({ order: [['year', 'DESC']] });
-  res.json(rows.map(m => ({
-    id: m.id,
-    title: m.title,
-    year: m.year,
-    director: m.director ?? null,
-    description: m.description ?? null,
-  })));
+router.get('/', async (req, res) => {
+    const page = parseInt(req.query.page, 10) || 1
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    const {count, rows} = await Movie.findAndCountAll({
+        order: [['year', 'DESC']],
+        limit,
+        offset
+    });
+
+    res.json({
+        page,
+        totalPages: Math.ceil(count / limit),
+        totalItems: count,
+        items: rows.map(m => ({
+            id: m.id,
+            title: m.title,
+            year: m.year,
+            director: m.director ?? null,
+            description: m.description ?? null,
+        })),
+    });
 });
 
 // GET /api/movies/:id
