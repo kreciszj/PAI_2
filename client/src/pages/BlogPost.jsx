@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
 import Comments from './Comments';
 import { useAuth } from '../contexts/AuthContext';
@@ -211,7 +211,11 @@ export default function BlogPost() {
           <div className="font-medium mb-2">Powiązane filmy:</div>
           <ul className="list-disc ml-5 text-sm">
             {post.movies.map(m => (
-              <li key={m.id}>{m.title}{m.year ? ` (${m.year})` : ''}</li>
+              <li key={m.id}>
+                <Link to={`/movies/${m.id}`} className="text-emerald-700 dark:text-emerald-400 hover:underline">
+                  {m.title}{m.year ? ` (${m.year})` : ''}
+                </Link>
+              </li>
             ))}
           </ul>
         </div>
