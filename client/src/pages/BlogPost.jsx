@@ -18,6 +18,9 @@ export default function BlogPost() {
   const [editBody, setEditBody] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [allMovies, setAllMovies] = useState([]);
+  const [movieFilter, setMovieFilter] = useState('');
+  const [selectedMovies, setSelectedMovies] = useState([]);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -36,6 +39,16 @@ export default function BlogPost() {
     };
     fetchPost();
   }, [id]);
+
+  useEffect(() => {
+    // fetch movies for selection when editing
+    (async () => {
+      try {
+        const res = await apiFetch('/api/movies');
+        if (res.ok) setAllMovies(await res.json());
+      } catch {}
+    })();
+  }, []);
 
   useEffect(() => {
     // fetch current user if logged in for permission checks
@@ -71,6 +84,7 @@ export default function BlogPost() {
   const startEdit = () => {
     setEditTitle(post.title);
     setEditBody(post.body || '');
+  setSelectedMovies(Array.isArray(post.movies) ? post.movies.map(m => m.id) : []);
     setIsEditing(true);
   };
 
@@ -85,12 +99,12 @@ export default function BlogPost() {
     try {
       const res = await apiFetch(`/api/posts/${id}`, {
         method: 'PUT',
-        body: { title: editTitle, body: editBody },
+        body: { title: editTitle, body: editBody, movieIds: selectedMovies.slice(0, 10) },
         accessToken,
       });
       if (!res.ok) throw new Error('Błąd zapisu');
       const data = await res.json();
-      setPost(p => ({ ...p, title: data.title, body: data.body }));
+      setPost(p => ({ ...p, title: data.title, body: data.body, movies: data.movies || [] }));
       setIsEditing(false);
     } catch (e) {
       alert(e.message || 'Nie udało się zapisać');
@@ -132,6 +146,47 @@ export default function BlogPost() {
             className="input"
             placeholder="Treść"
           />
+          <div className="pt-2">
+            <div className="flex items-baseline justify-between mb-2">
+              <label className="block font-medium">Powiąż filmy (max 10)</label>
+              <span className="text-xs text-neutral-500">Wybrane: {selectedMovies.length}/10</span>
+            </div>
+            <input
+              type="text"
+              placeholder="Szukaj filmu..."
+              value={movieFilter}
+              onChange={e => setMovieFilter(e.target.value)}
+              className="input mb-2"
+            />
+            <div className="max-h-48 overflow-auto border rounded-md p-2 bg-white dark:bg-neutral-900">
+              {allMovies
+                .filter(m => !movieFilter.trim() || `${m.title} ${m.year ?? ''}`.toLowerCase().includes(movieFilter.toLowerCase()))
+                .map(m => {
+                  const checked = selectedMovies.includes(m.id);
+                  const disableMore = !checked && selectedMovies.length >= 10;
+                  return (
+                    <label key={m.id} className={`flex items-center gap-2 py-1 px-1 rounded hover:bg-neutral-50 dark:hover:bg-neutral-800 ${disableMore ? 'opacity-60' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={disableMore}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setSelectedMovies(prev => (prev.includes(m.id) || prev.length >= 10) ? prev : [...prev, m.id]);
+                          } else {
+                            setSelectedMovies(prev => prev.filter(x => x !== m.id));
+                          }
+                        }}
+                      />
+                      <span className="text-sm">{m.title} {m.year ? `(${m.year})` : ''}</span>
+                    </label>
+                  );
+                })}
+              {allMovies.length === 0 && (
+                <div className="text-sm text-neutral-500">Brak filmów</div>
+              )}
+            </div>
+          </div>
           <div className="flex gap-2 pt-2">
             <button type="submit" disabled={saving} className="btn">
               {saving ? 'Zapisywanie…' : 'Zapisz'}
@@ -145,6 +200,16 @@ export default function BlogPost() {
       <div className="mb-4 text-neutral-900 dark:text-neutral-100">
         {!isEditing && post.body && <ReactMarkdown>{post.body}</ReactMarkdown>}
       </div>
+      {!isEditing && Array.isArray(post.movies) && post.movies.length > 0 && (
+        <div className="mb-4">
+          <div className="font-medium mb-2">Powiązane filmy:</div>
+          <ul className="list-disc ml-5 text-sm">
+            {post.movies.map(m => (
+              <li key={m.id}>{m.title}{m.year ? ` (${m.year})` : ''}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       {canModify && !isEditing && (
         <div className="flex gap-2 mb-3">
           <button onClick={startEdit} className="btn">Edytuj</button>
