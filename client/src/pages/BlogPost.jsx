@@ -4,6 +4,8 @@ import { apiFetch } from '../lib/api';
 import Comments from './Comments';
 import { useAuth } from '../contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 
 export default function BlogPost() {
   const { id } = useParams();
@@ -197,8 +199,12 @@ export default function BlogPost() {
       ) : (
         <h2 className="text-2xl font-semibold mb-3">{post.title}</h2>
       )}
-      <div className="mb-4 text-neutral-900 dark:text-neutral-100">
-        {!isEditing && post.body && <ReactMarkdown>{post.body}</ReactMarkdown>}
+      <div className="mb-4 text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none">
+        {!isEditing && post.body && (
+          <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+            {post.body}
+          </ReactMarkdown>
+        )}
       </div>
       {!isEditing && Array.isArray(post.movies) && post.movies.length > 0 && (
         <div className="mb-4">

@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
 import Movies from './pages/Movies';
 import Blogs from './pages/Blogs';
-import MyBlog from './pages/MyBlog';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
 import MovieDetails from './pages/MovieDetails';
@@ -26,7 +25,6 @@ export default function App() {
             <Route index element={<Movies />} />
             <Route path="blogs" element={<Blogs />} />
             <Route path="blogs/:id" element={<BlogPost />} />
-            <Route path="my-blog" element={<MyBlog />} />
             <Route path="settings" element={<Settings />} />
             <Route path="movies/:id" element={<MovieDetails />} />
           </Route>
