@@ -81,10 +81,7 @@ export default function MovieDetails() {
     const r = await apiFetch(`/api/movies/${id}`, { accessToken, refreshToken, setTokens });
     if (r.ok) {
       const d = await r.json();
-      setData({
-        ...d,
-        comments: Array.isArray(d.comments) ? d.comments : [],
-      });
+      setData({ ...d, comments: Array.isArray(d.comments) ? d.comments : [] });
     }
     setLoading(false);
   }
@@ -270,20 +267,45 @@ export default function MovieDetails() {
 
             <div className="card">
               <h2 className="text-lg font-semibold mb-3">Twoja ocena</h2>
-              <div className="flex items-center justify-between gap-3">
-                <StarsInput value={myRating} onChange={setMyRating} disabled={!accessToken || submittingRating} />
+
+              <div className="flex flex-col items-center gap-3">
+                <StarsInput
+                  value={myRating}
+                  onChange={setMyRating}
+                  disabled={!accessToken || submittingRating}
+                />
+
                 <div className="flex gap-2">
-                  <button onClick={submitRating} disabled={!accessToken || submittingRating} className="btn">
+                  <button
+                    onClick={submitRating}
+                    disabled={!accessToken || submittingRating}
+                    className="btn"
+                  >
                     {submittingRating ? 'Zapisywanie…' : 'Zapisz'}
                   </button>
-                  <button onClick={clearRating} disabled={!accessToken || submittingRating} className="btn-ghost border border-neutral-200 dark:border-neutral-800 rounded-xl">
-                    Wyczyść
+                  <button
+                    onClick={clearRating}
+                    disabled={!accessToken || submittingRating}
+                    className="btn-ghost border border-neutral-200 dark:border-neutral-800 rounded-xl"
+                    title="Usuń swoją ocenę"
+                  >
+                    Usuń ocenę
                   </button>
                 </div>
+
+                {ratingMsg && (
+                  <div className="text-sm mt-1 text-neutral-600 dark:text-neutral-400">
+                    {ratingMsg}
+                  </div>
+                )}
+                {!accessToken && (
+                  <div className="text-sm mt-1 text-neutral-500">
+                    Zaloguj się, aby oceniać.
+                  </div>
+                )}
               </div>
-              {ratingMsg && <div className="text-sm mt-2 text-neutral-600 dark:text-neutral-400">{ratingMsg}</div>}
-              {!accessToken && <div className="text-sm mt-2 text-neutral-500">Zaloguj się, aby oceniać.</div>}
             </div>
+
           </div>
         </div>
       </section>
