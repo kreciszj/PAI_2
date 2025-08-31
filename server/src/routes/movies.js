@@ -291,6 +291,34 @@ router.post('/:id/rating', requireAuth, async (req, res) => {
   }
 });
 
+// DELETE /api/movies/:id/rating — usuń ocenę bieżącego użytkownika
+router.delete('/:id/rating', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const movie = await Movie.findByPk(id);
+    if (!movie) return res.status(404).json({ error: 'not_found' });
+
+    const userId = req.user.sub;
+    const existing = await Rating.findOne({ where: { user_id: userId, movie_id: id } });
+
+    if (existing) {
+      await existing.destroy();
+    }
+
+    const avgRow = await Rating.findOne({
+      where: { movie_id: id },
+      attributes: [[fn('avg', col('value')), 'avg']],
+      raw: true,
+    });
+    const averageRating = avgRow?.avg != null ? Number(parseFloat(avgRow.avg).toFixed(2)) : null;
+
+    return res.json({ ok: true, averageRating });
+  } catch (e) {
+    console.error('DELETE /api/movies/:id/rating error', e);
+    return res.status(500).json({ error: 'internal' });
+  }
+});
+
 // GET /api/movies/:id/comments
 router.get('/:id/comments', async (req, res) => {
   try {
