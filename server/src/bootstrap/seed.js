@@ -38,6 +38,7 @@ export async function seed() {
             year: m.year ?? null,
             director: m.director ?? null,
             description: m.description ?? null,
+            cover_url: m.coverUrl ?? null,
           }));
           console.log('[seed] imported movies from JSON');
         }
