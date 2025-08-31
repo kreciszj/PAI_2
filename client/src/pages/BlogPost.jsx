@@ -35,10 +35,28 @@ export default function BlogPost() {
       } catch (err) { setError(err.message); } finally { setLoading(false); }
     };
     fetchPost();
-  }, [id]);
+  }, [id, accessToken]);
 
-  useEffect(() => { (async () => { try { const res = await apiFetch('/api/movies'); if (res.ok) setAllMovies(await res.json()); } catch { } })(); }, []);
-  useEffect(() => { (async () => { if (!accessToken) { setMe(null); return; } const res = await apiFetch('/api/auth/me', { accessToken, refreshToken, setTokens }); if (res.ok) setMe(await res.json()); })(); }, [accessToken, refreshToken, setTokens]);
+  // FIX: z API /api/movies bierzemy data.items (tablicę), nie cały obiekt
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiFetch('/api/movies');
+        if (res.ok) {
+          const data = await res.json();
+          setAllMovies(Array.isArray(data?.items) ? data.items : []);
+        }
+      } catch { /* ignore */ }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      if (!accessToken) { setMe(null); return; }
+      const res = await apiFetch('/api/auth/me', { accessToken, refreshToken, setTokens });
+      if (res.ok) setMe(await res.json());
+    })();
+  }, [accessToken, refreshToken, setTokens]);
 
   if (loading) return <div className="text-sm text-neutral-500">Ładowanie...</div>;
   if (error) return <div className="text-red-600 dark:text-red-400">{error}</div>;
@@ -118,7 +136,7 @@ export default function BlogPost() {
             </div>
             <input type="text" placeholder="Szukaj filmu..." value={movieFilter} onChange={e => setMovieFilter(e.target.value)} className="input mb-2" />
             <div className="max-h-48 overflow-auto border rounded-md p-2 bg-white dark:bg-neutral-900">
-              {allMovies
+              {(Array.isArray(allMovies) ? allMovies : [])
                 .filter(m => !movieFilter.trim() || `${m.title} ${m.year ?? ''}`.toLowerCase().includes(movieFilter.toLowerCase()))
                 .map(m => {
                   const checked = selectedMovies.includes(m.id);
@@ -131,7 +149,7 @@ export default function BlogPost() {
                     </label>
                   );
                 })}
-              {allMovies.length === 0 && (<div className="text-sm text-neutral-500">Brak filmów</div>)}
+              {Array.isArray(allMovies) && allMovies.length === 0 && (<div className="text-sm text-neutral-500">Brak filmów</div>)}
             </div>
           </div>
           <div className="flex gap-2 pt-1">
