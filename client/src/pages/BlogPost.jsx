@@ -1,4 +1,3 @@
-// src/pages/BlogPost.jsx
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
@@ -38,7 +37,7 @@ export default function BlogPost() {
     fetchPost();
   }, [id]);
 
-  useEffect(() => { (async () => { try { const res = await apiFetch('/api/movies'); if (res.ok) setAllMovies(await res.json()); } catch {} })(); }, []);
+  useEffect(() => { (async () => { try { const res = await apiFetch('/api/movies'); if (res.ok) setAllMovies(await res.json()); } catch { } })(); }, []);
   useEffect(() => { (async () => { if (!accessToken) { setMe(null); return; } const res = await apiFetch('/api/auth/me', { accessToken, refreshToken, setTokens }); if (res.ok) setMe(await res.json()); })(); }, [accessToken, refreshToken, setTokens]);
 
   if (loading) return <div className="text-sm text-neutral-500">Ładowanie...</div>;

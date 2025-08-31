@@ -1,4 +1,3 @@
-// middleware/requireAuth.js
 import { verifyAccess } from '../lib/jwt.js';
 import { User } from '../models/index.js';
 

@@ -25,5 +25,5 @@ await initDb();
 await seed();
 
 app.listen(config.port, () => {
-  console.log(`API on http://localhost:${config.port}`);
+  console.log(`API działa na http://localhost:${config.port}`);
 });

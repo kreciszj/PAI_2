@@ -1,4 +1,3 @@
-// src/pages/Blogs.jsx
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../lib/api';
 import { Link } from 'react-router-dom';
@@ -37,7 +36,7 @@ export default function Blogs() {
           const data = await res.json();
           setMovies(data.items);
         }
-      } catch {}
+      } catch { }
     })();
   }, []);
 
@@ -109,7 +108,7 @@ export default function Blogs() {
       </form>
 
       {loading ? (
-        <div className="grid gap-3">{Array.from({length:4}).map((_,i)=><div key={i} className="card"><div className="skeleton h-5 w-1/2 mb-3"></div><div className="skeleton h-4 w-full mb-2"></div><div className="skeleton h-4 w-5/6"></div></div>)}</div>
+        <div className="grid gap-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="card"><div className="skeleton h-5 w-1/2 mb-3"></div><div className="skeleton h-4 w-full mb-2"></div><div className="skeleton h-4 w-5/6"></div></div>)}</div>
       ) : (
         <ul className="grid gap-6">
           {posts.map(post => (

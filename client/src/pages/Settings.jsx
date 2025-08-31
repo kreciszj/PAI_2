@@ -12,9 +12,9 @@ function Sidebar({ tabs, active, onSelect }) {
           className={
             `w-full text-left px-4 py-3 border-b last:border-0 transition
              hover:bg-neutral-50 dark:hover:bg-neutral-800
-             ${active===t.key
-               ? 'bg-neutral-100 dark:bg-neutral-800 font-semibold'
-               : ''}`
+             ${active === t.key
+              ? 'bg-neutral-100 dark:bg-neutral-800 font-semibold'
+              : ''}`
           }
         >
           {t.label}
@@ -189,7 +189,6 @@ export default function Settings() {
 
   return (
     <div className="container-page max-w-5xl grid gap-4">
-      {/* Hero */}
       <div className="card p-6">
         <h1 className="text-3xl font-extrabold">
           <span className="title-gradient">Ustawienia</span>

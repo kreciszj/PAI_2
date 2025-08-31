@@ -12,17 +12,12 @@ const router = Router();
 router.post('/register', async (req, res) => {
   const { username, password } = req.body || {};
 
-  // validate input
   if (typeof username !== 'string' || typeof password !== 'string') {
     return res.status(400).json({ error: 'invalid_payload' });
   }
   const u = username.trim();
-  if (u.length < 3 || u.length > 32) {
-    return res.status(400).json({ error: 'username_length_3_32' });
-  }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'password_min_6' });
-  }
+  if (u.length < 3 || u.length > 32) return res.status(400).json({ error: 'username_length_3_32' });
+  if (password.length < 6) return res.status(400).json({ error: 'password_min_6' });
 
   const exists = await User.findOne({ where: { username: u } });
   if (exists) return res.status(409).json({ error: 'username_taken' });
@@ -30,12 +25,10 @@ router.post('/register', async (req, res) => {
   const hash = await bcrypt.hash(password, 12);
   const user = await User.create({ id: uuid(), username: u, password_hash: hash, role: 'user' });
 
-  // zwracamy minimalne dane, bez tokenów
   return res.status(201).json({ id: user.id, username: user.username });
 });
 
-
-// POST /api/auth/login -> access + refresh
+// POST /api/auth/login
 router.post('/login', async (req, res) => {
   const { username, password } = req.body || {};
   const user = await User.findOne({ where: { username } });
@@ -52,7 +45,7 @@ router.post('/login', async (req, res) => {
   return res.json({ accessToken: access, refreshToken: refresh });
 });
 
-// POST /api/auth/refresh -> nowy access token
+// POST /api/auth/refresh
 router.post('/refresh', async (req, res) => {
   const { refreshToken } = req.body || {};
   if (!refreshToken) return res.status(400).json({ error: 'missing_refresh' });
@@ -72,7 +65,7 @@ router.post('/refresh', async (req, res) => {
   }
 });
 
-// POST /api/auth/logout -> unieważnij refresh
+// POST /api/auth/logout
 router.post('/logout', async (req, res) => {
   const { refreshToken } = req.body || {};
   if (!refreshToken) return res.status(400).json({ error: 'missing_refresh' });
@@ -85,7 +78,7 @@ router.get('/me', requireAuth, async (req, res) => {
   return res.json({ id: req.user.sub, username: req.user.username, role: req.user.role });
 });
 
-// PATCH /api/auth/me -> update current user's username and/or password
+// PATCH /api/auth/me
 router.patch('/me', requireAuth, async (req, res) => {
   const userId = req.user.sub;
   const { username, currentPassword, newPassword } = req.body || {};
@@ -95,12 +88,9 @@ router.patch('/me', requireAuth, async (req, res) => {
 
   let changed = false;
 
-  // Username change
   if (typeof username !== 'undefined' && username !== null) {
     const u = String(username).trim();
-    if (u.length < 3 || u.length > 32) {
-      return res.status(400).json({ error: 'username_length_3_32' });
-    }
+    if (u.length < 3 || u.length > 32) return res.status(400).json({ error: 'username_length_3_32' });
     if (u !== user.username) {
       const exists = await User.findOne({ where: { username: u } });
       if (exists) return res.status(409).json({ error: 'username_taken' });
@@ -109,33 +99,23 @@ router.patch('/me', requireAuth, async (req, res) => {
     }
   }
 
-  // Password change
   if (typeof newPassword !== 'undefined' && newPassword !== null) {
     const np = String(newPassword);
-    if (np.length < 6) {
-      return res.status(400).json({ error: 'password_min_6' });
-    }
-    // require currentPassword to change password
+    if (np.length < 6) return res.status(400).json({ error: 'password_min_6' });
     if (!currentPassword || typeof currentPassword !== 'string') {
       return res.status(400).json({ error: 'current_password_required' });
     }
     const ok = await bcrypt.compare(currentPassword, user.password_hash);
-    if (!ok) {
-      return res.status(401).json({ error: 'invalid_current_password' });
-    }
+    if (!ok) return res.status(401).json({ error: 'invalid_current_password' });
     const hash = await bcrypt.hash(np, 12);
     user.password_hash = hash;
     changed = true;
   }
 
-  if (!changed) {
-    // nothing to update
-    return res.status(400).json({ error: 'nothing_to_update' });
-  }
+  if (!changed) return res.status(400).json({ error: 'nothing_to_update' });
 
   await user.save();
 
-  // Return a fresh access token to reflect potential username change
   const access = signAccessToken(user);
   return res.json({ id: user.id, username: user.username, role: user.role, accessToken: access });
 });

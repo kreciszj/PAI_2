@@ -8,7 +8,7 @@ const PLACEHOLDER = `data:image/svg+xml;utf8,` + encodeURIComponent(
   `<svg xmlns='http://www.w3.org/2000/svg' width='240' height='360'><rect width='100%' height='100%' fill='#e5e7eb'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='48' fill='#9ca3af'>?</text></svg>`
 );
 
-function toAbs(u){ if(!u) return u; return u.startsWith('/uploads/') ? `${API}${u}` : u; }
+function toAbs(u) { if (!u) return u; return u.startsWith('/uploads/') ? `${API}${u}` : u; }
 
 function Cover({ src, alt }) {
   const [s, setS] = useState(toAbs(src) || PLACEHOLDER);
@@ -19,7 +19,7 @@ function Cover({ src, alt }) {
       width={240}
       height={360}
       className="w-full aspect-[2/3] object-cover rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900"
-      onError={(e)=>{ if(s!==PLACEHOLDER){ e.currentTarget.onerror=null; setS(PLACEHOLDER);} }}
+      onError={(e) => { if (s !== PLACEHOLDER) { e.currentTarget.onerror = null; setS(PLACEHOLDER); } }}
     />
   );
 }
@@ -35,7 +35,7 @@ export default function Movies() {
     (async () => {
       setLoading(true);
       try {
-        const r = await apiFetch(`/api/movies?page=${page}`, {accessToken, refreshToken, setTokens});
+        const r = await apiFetch(`/api/movies?page=${page}`, { accessToken, refreshToken, setTokens });
         if (r.ok) {
           const data = await r.json();
           setRows(data.items);
@@ -50,12 +50,12 @@ export default function Movies() {
   return (
     <div className="grid gap-6">
       <div className="tabs w-fit">
-        <NavLink to="/" end className={({isActive}) => `tab ${isActive ? 'tab-active' : ''}`}>Baza filmów</NavLink>
-        <NavLink to="/top" className={({isActive}) => `tab ${isActive ? 'tab-active' : ''}`}>Ranking</NavLink>
+        <NavLink to="/" end className={({ isActive }) => `tab ${isActive ? 'tab-active' : ''}`}>Baza filmów</NavLink>
+        <NavLink to="/top" className={({ isActive }) => `tab ${isActive ? 'tab-active' : ''}`}>Ranking</NavLink>
       </div>
 
       {loading && <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        {Array.from({length:10}).map((_,i)=><div key={i} className="card p-0 overflow-hidden"><div className="skeleton aspect-[2/3]"></div><div className="p-3 space-y-2"><div className="skeleton h-4 w-2/3"></div><div className="skeleton h-3 w-1/3"></div></div></div>)}
+        {Array.from({ length: 10 }).map((_, i) => <div key={i} className="card p-0 overflow-hidden"><div className="skeleton aspect-[2/3]"></div><div className="p-3 space-y-2"><div className="skeleton h-4 w-2/3"></div><div className="skeleton h-3 w-1/3"></div></div></div>)}
       </div>}
 
       {!loading && (

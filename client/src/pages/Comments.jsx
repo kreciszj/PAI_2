@@ -1,4 +1,3 @@
-// src/pages/Comments.jsx
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
@@ -31,7 +30,7 @@ export default function Comments() {
   }
 
   useEffect(() => { fetchComments(); }, [id]);
-  useEffect(() => { (async () => { if (!accessToken) { setMe(null); return; } try { const res = await apiFetch('/api/auth/me', { accessToken, refreshToken, setTokens }); if (res.ok) setMe(await res.json()); } catch {} })(); }, [accessToken, refreshToken, setTokens]);
+  useEffect(() => { (async () => { if (!accessToken) { setMe(null); return; } try { const res = await apiFetch('/api/auth/me', { accessToken, refreshToken, setTokens }); if (res.ok) setMe(await res.json()); } catch { } })(); }, [accessToken, refreshToken, setTokens]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -115,7 +114,7 @@ export default function Comments() {
       {error && <div className="text-red-600 dark:text-red-400 mb-2">{error}</div>}
 
       {loading ? (
-        <div className="grid gap-2">{Array.from({length:3}).map((_,i)=><div key={i} className="card"><div className="skeleton h-4 w-1/2 mb-2"></div><div className="skeleton h-3 w-full mb-1"></div><div className="skeleton h-3 w-5/6"></div></div>)}</div>
+        <div className="grid gap-2">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="card"><div className="skeleton h-4 w-1/2 mb-2"></div><div className="skeleton h-3 w-full mb-1"></div><div className="skeleton h-3 w-5/6"></div></div>)}</div>
       ) : (
         <ul className="grid gap-3">
           {comments.map(comment => (
