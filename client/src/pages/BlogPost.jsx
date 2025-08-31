@@ -37,6 +37,7 @@ export default function BlogPost() {
     fetchPost();
   }, [id, accessToken]);
 
+<<<<<<< HEAD
   // FIX: z API /api/movies bierzemy data.items (tablicę), nie cały obiekt
   useEffect(() => {
     (async () => {
@@ -57,6 +58,10 @@ export default function BlogPost() {
       if (res.ok) setMe(await res.json());
     })();
   }, [accessToken, refreshToken, setTokens]);
+=======
+  useEffect(() => { (async () => { try { const res = await apiFetch('/api/movies'); if (res.ok) setAllMovies(await res.json()); } catch { } })(); }, []);
+  useEffect(() => { (async () => { if (!accessToken) { setMe(null); return; } const res = await apiFetch('/api/auth/me', { accessToken, refreshToken, setTokens }); if (res.ok) setMe(await res.json()); })(); }, [accessToken, refreshToken, setTokens]);
+>>>>>>> origin
 
   if (loading) return <div className="text-sm text-neutral-500">Ładowanie...</div>;
   if (error) return <div className="text-red-600 dark:text-red-400">{error}</div>;
