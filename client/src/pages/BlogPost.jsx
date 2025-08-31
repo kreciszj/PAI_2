@@ -37,7 +37,6 @@ export default function BlogPost() {
     fetchPost();
   }, [id, accessToken]);
 
-  // FIX: z API /api/movies bierzemy data.items (tablicę), nie cały obiekt
   useEffect(() => {
     (async () => {
       try {
