@@ -42,7 +42,7 @@ export default function Register() {
           <h1 className="text-2xl font-extrabold">
             <span className="title-gradient">Dołącz do nas</span>
           </h1>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">Załóż konto w minutę.</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">Załóż konto dosłownie w pare sekund!</p>
         </div>
 
         <form onSubmit={submit} className="px-6 pb-6 pt-4 grid gap-4">
@@ -50,7 +50,7 @@ export default function Register() {
             className="input"
             placeholder="username (3–32)"
             value={username}
-            onChange={e=>setU(e.target.value)}
+            onChange={e => setU(e.target.value)}
             minLength={3}
             maxLength={32}
             required
@@ -60,7 +60,7 @@ export default function Register() {
             type="password"
             placeholder="password (min 6)"
             value={password}
-            onChange={e=>setP(e.target.value)}
+            onChange={e => setP(e.target.value)}
             minLength={6}
             required
           />

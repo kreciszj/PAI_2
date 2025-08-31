@@ -18,7 +18,7 @@ function Cover({ src, alt }) {
       src={s || PLACEHOLDER}
       alt={alt}
       className="w-full aspect-[2/3] object-cover rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900"
-      onError={(e)=>{ if(s!==PLACEHOLDER){ e.currentTarget.onerror=null; setS(PLACEHOLDER);} }}
+      onError={(e) => { if (s !== PLACEHOLDER) { e.currentTarget.onerror = null; setS(PLACEHOLDER); } }}
     />
   );
 }
@@ -41,7 +41,6 @@ export default function Home() {
 
   return (
     <div className="grid gap-6">
-      {/* Hero */}
       <section className="card p-6">
         <h1 className="text-4xl font-extrabold">
           <span className="title-gradient">CineBase</span>
@@ -55,7 +54,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Ostatnio dodane */}
       <section className="grid gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Ostatnio dodane filmy</h2>
@@ -64,7 +62,7 @@ export default function Home() {
 
         {loading ? (
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-            {Array.from({length:10}).map((_,i)=>(
+            {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="card p-0 overflow-hidden">
                 <div className="skeleton aspect-[2/3]"></div>
                 <div className="p-3 space-y-2">

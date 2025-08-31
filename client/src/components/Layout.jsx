@@ -1,4 +1,3 @@
-// src/components/Layout.jsx
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -67,7 +66,7 @@ export default function Layout() {
                 className="btn btn-success rounded-xl inline-flex items-center gap-2"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" className="opacity-90">
-                  <path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/>
+                  <path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" />
                 </svg>
                 <span>Dodaj Film</span>
               </Link>

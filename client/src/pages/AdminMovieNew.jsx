@@ -1,4 +1,3 @@
-// src/pages/AdminMovieNew.jsx
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -69,7 +68,6 @@ export default function AdminMovieNew() {
       <h1 className="text-3xl font-extrabold mb-2"><span className="title-gradient">Dodaj film</span></h1>
 
       <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-[320px_1fr] items-start">
-        {/* Podgląd okładki */}
         <div className="card grid gap-3">
           <div className="text-sm font-medium">Okładka</div>
           <label
@@ -86,7 +84,6 @@ export default function AdminMovieNew() {
           <p className="text-xs text-neutral-500">PNG/JPG/WEBP, do 5 MB.</p>
         </div>
 
-        {/* Pola filmu */}
         <div className="card grid gap-3">
           <label className="grid gap-1">
             <span className="text-sm font-medium">Tytuł *</span>

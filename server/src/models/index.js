@@ -7,12 +7,12 @@ export const sequelize = new Sequelize({
   logging: false,
 });
 
-// ===== MODELE =====
+// ===== MODELS =====
 export const User = sequelize.define('User', {
   id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
   username: { type: DataTypes.STRING, unique: true, allowNull: false },
   password_hash: { type: DataTypes.TEXT, allowNull: false },
-  role: { type: DataTypes.ENUM('user','moderator','admin'), defaultValue: 'user' },
+  role: { type: DataTypes.ENUM('user', 'moderator', 'admin'), defaultValue: 'user' },
   bio: { type: DataTypes.TEXT },
 }, { tableName: 'users', underscored: true });
 
@@ -81,7 +81,7 @@ export const PostMovie = sequelize.define('PostMovie', {
   indexes: [{ unique: true, fields: ['post_id', 'movie_id'] }],
 });
 
-// ===== RELACJE =====
+// ===== RELATIONS =====
 User.hasMany(Post, { foreignKey: 'author_id' });
 Post.belongsTo(User, { foreignKey: 'author_id' });
 User.hasMany(RefreshToken, { foreignKey: 'user_id' });

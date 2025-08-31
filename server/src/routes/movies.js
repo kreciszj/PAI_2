@@ -1,4 +1,3 @@
-// routes/movies.js (lub odpowiednia ścieżka pliku z routerem filmów)
 import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { fn, col } from 'sequelize';
@@ -10,7 +9,6 @@ import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
 
-// === upload setup ===
 const uploadRoot = path.join(process.cwd(), 'uploads');
 const coversDir = path.join(uploadRoot, 'covers');
 fs.mkdirSync(coversDir, { recursive: true });
@@ -40,7 +38,7 @@ router.get('/', async (req, res) => {
 
   if (pageQuery) {
     page = parseInt(pageQuery, 10) || 1;
-    const limit = 10; // ⬅️ zmiana: 10 na stronę
+    const limit = 10;
     const offset = (page - 1) * limit;
 
     const result = await Movie.findAndCountAll({
@@ -53,7 +51,6 @@ router.get('/', async (req, res) => {
     items = result.rows;
     totalPages = Math.ceil(count / limit);
   } else {
-    // brak page → zwracamy wszystkie
     items = await Movie.findAll({ order: [['year', 'DESC']] });
     count = items.length;
     page = 1;
@@ -89,7 +86,6 @@ router.get('/top', async (req, res) => {
         raw: true,
       });
       const averageRating = avgRow?.avg != null ? Number(parseFloat(avgRow.avg).toFixed(2)) : 0;
-
       return {
         id: m.id,
         title: m.title,
@@ -156,7 +152,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/movies (admin) — create
+// POST /api/movies
 router.post('/', requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: 'forbidden' });
   try {
@@ -186,7 +182,7 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// PUT /api/movies/:id (admin) — update
+// PUT /api/movies/:id
 router.put('/:id', requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: 'forbidden' });
   try {
@@ -215,7 +211,7 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/movies/:id (admin) — delete
+// DELETE /api/movies/:id
 router.delete('/:id', requireAuth, async (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: 'forbidden' });
   try {
@@ -240,7 +236,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/movies/:id/cover (admin) — upload file
+// POST /api/movies/:id/cover
 router.post('/:id/cover', requireAuth, (req, res, next) => {
   if (!isAdmin(req)) return res.status(403).json({ error: 'forbidden' });
   next();
@@ -264,8 +260,6 @@ router.post('/:id/cover', requireAuth, (req, res, next) => {
     res.status(500).json({ error: 'internal' });
   }
 });
-
-// ===== Komentarze i oceny =====
 
 // POST /api/movies/:id/rating
 router.post('/:id/rating', requireAuth, async (req, res) => {
@@ -358,7 +352,6 @@ router.post('/:id/comments', requireAuth, async (req, res) => {
     return res.status(500).json({ error: 'internal' });
   }
 });
-
 
 // PUT /api/movies/:movieId/comments/:commentId
 router.put('/:movieId/comments/:commentId', requireAuth, async (req, res) => {

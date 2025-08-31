@@ -54,7 +54,7 @@ router.patch('/:id', requireAuth, ensureAdmin, async (req, res) => {
       if (req.user?.sub === id) {
         return res.status(400).json({ error: 'cannot_change_own_role' });
       }
-      const allowed = ['user','moderator','admin'];
+      const allowed = ['user', 'moderator', 'admin'];
       const r = String(role);
       if (!allowed.includes(r)) return res.status(400).json({ error: 'invalid_role' });
       if (user.role !== r) { user.role = r; changed = true; }

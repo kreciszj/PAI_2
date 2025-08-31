@@ -1,4 +1,3 @@
-// src/pages/MoviesTop.jsx
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '../lib/api';
@@ -8,7 +7,7 @@ const API = import.meta.env.VITE_API_URL;
 const PLACEHOLDER = `data:image/svg+xml;utf8,` + encodeURIComponent(
   `<svg xmlns='http://www.w3.org/2000/svg' width='240' height='360'><rect width='100%' height='100%' fill='#e5e7eb'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='48' fill='#9ca3af'>?</text></svg>`
 );
-function toAbs(u){ if(!u) return u; return u.startsWith('/uploads/') ? `${API}${u}` : u; }
+function toAbs(u) { if (!u) return u; return u.startsWith('/uploads/') ? `${API}${u}` : u; }
 function Cover({ src, alt }) {
   const [s, setS] = useState(toAbs(src) || PLACEHOLDER);
   return (
@@ -16,22 +15,22 @@ function Cover({ src, alt }) {
       src={s || PLACEHOLDER}
       alt={alt}
       className="w-[96px] h-[144px] object-cover rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900"
-      onError={(e)=>{ if(s!==PLACEHOLDER){ e.currentTarget.onerror=null; setS(PLACEHOLDER);} }}
+      onError={(e) => { if (s !== PLACEHOLDER) { e.currentTarget.onerror = null; setS(PLACEHOLDER); } }}
     />
   );
 }
-function Stars({ value=0 }) {
+function Stars({ value = 0 }) {
   const v = Math.max(0, Math.min(10, value));
   const full = Math.floor(v);
   const half = v - full >= .5;
-  const empty = 10 - full - (half?1:0);
+  const empty = 10 - full - (half ? 1 : 0);
   return (
     <span className="text-yellow-500/90">
-      {'★'.repeat(full)}{half?'⯪':''}{'✩'.repeat(empty)}
+      {'★'.repeat(full)}{half ? '⯪' : ''}{'✩'.repeat(empty)}
     </span>
   );
 }
-function truncateText(text, maxLength){ if(!text) return ''; const n = Math.max(0, maxLength-3); return text.length>maxLength ? text.slice(0,n)+'…' : text; }
+function truncateText(text, maxLength) { if (!text) return ''; const n = Math.max(0, maxLength - 3); return text.length > maxLength ? text.slice(0, n) + '…' : text; }
 
 export default function MoviesTop() {
   const { accessToken, refreshToken, setTokens } = useAuth();
@@ -44,7 +43,7 @@ export default function MoviesTop() {
     (async () => {
       setLoading(true);
       try {
-        const r = await apiFetch(`/api/movies/top?page=${page}`, {accessToken, refreshToken, setTokens});
+        const r = await apiFetch(`/api/movies/top?page=${page}`, { accessToken, refreshToken, setTokens });
         if (r.ok) {
           const data = await r.json();
           setRows(data.items);
@@ -59,11 +58,11 @@ export default function MoviesTop() {
   return (
     <div className="grid gap-6">
       <div className="tabs w-fit">
-        <NavLink to="/" end className={({isActive}) => `tab ${isActive ? 'tab-active' : ''}`}>Baza filmów</NavLink>
-        <NavLink to="/top" className={({isActive}) => `tab ${isActive ? 'tab-active' : ''}`}>Ranking</NavLink>
+        <NavLink to="/" end className={({ isActive }) => `tab ${isActive ? 'tab-active' : ''}`}>Baza filmów</NavLink>
+        <NavLink to="/top" className={({ isActive }) => `tab ${isActive ? 'tab-active' : ''}`}>Ranking</NavLink>
       </div>
 
-      {loading && <div className="grid gap-3">{Array.from({length:8}).map((_,i)=><div key={i} className="card p-4 flex gap-4 items-center"><div className="skeleton w-24 h-36"></div><div className="flex-1 space-y-2"><div className="skeleton h-5 w-2/3"></div><div className="skeleton h-4 w-1/3"></div><div className="skeleton h-3 w-1/2"></div></div></div>)}</div>}
+      {loading && <div className="grid gap-3">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="card p-4 flex gap-4 items-center"><div className="skeleton w-24 h-36"></div><div className="flex-1 space-y-2"><div className="skeleton h-5 w-2/3"></div><div className="skeleton h-4 w-1/3"></div><div className="skeleton h-3 w-1/2"></div></div></div>)}</div>}
 
       {!loading && (
         <div className="flex flex-col gap-3">
